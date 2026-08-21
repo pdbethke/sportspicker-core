@@ -1,0 +1,25 @@
+[project]
+name = "sportspicker-core"
+version = "0.1.0"
+description = "Scoring and aggregation for sports pick'em contests"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Elastic-2.0" }
+authors = [{ name = "Peter D Bethke" }]
+# No runtime dependencies, deliberately. The library is arithmetic over plain
+# objects, and the absence of dependencies is what lets it be tested — and
+# audited — in an offline sandbox where a virtualenv is not visible.
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["sportspicker_core*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests_core"]
