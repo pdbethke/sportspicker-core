@@ -78,5 +78,6 @@ The properties worth attacking are written down rather than implied:
 - **Scorers, not pickers** — `min_participants` counts members who scored,
   because normalised weights already give non-scorers nothing.
 
-The design reasoning behind these is in
-`docs/superpowers/specs/2026-08-19-cross-sport-scoring-design.md`.
+Each is stated as a guarantee rather than as a description of the code, which
+is the form an audit can attack. `docs/audit-demo.md` walks through why the
+first one is hard to violate on purpose and easy to violate by accident.
