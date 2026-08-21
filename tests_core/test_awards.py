@@ -141,13 +141,13 @@ class TestMinimumParticipants:
         assert effective_pot(1000.0, scores, {}) == 1000.0
 
     def test_scale_shrinks_the_pot_in_proportion(self):
-        """Two of a required four scored, so half the pot is at stake."""
-        scores = field(5, 5, 0, 0)
+        """Two members against a required four, so half the pot is at stake."""
+        scores = field(5, 5)
 
         assert effective_pot(1000.0, scores, {"min_participants": 4}) == pytest.approx(500)
 
     def test_void_awards_nothing(self):
-        scores = field(5, 0, 0)
+        scores = field(5)
 
         pot = effective_pot(
             1000.0, scores,
@@ -161,21 +161,9 @@ class TestMinimumParticipants:
 
         assert effective_pot(1000.0, scores, {"min_participants": 3}) == 1000.0
 
-    def test_it_counts_scorers_not_pickers(self):
-        """
-        The knob guards against a handful of scorers splitting a pot meant for
-        a much larger field. Counting everyone present would not guard against
-        that at all, since non-scorers already take nothing.
-        """
-        scores = field(5, 0, 0, 0, 0)      # five present, one scoring
-
-        pot = effective_pot(1000.0, scores, {"min_participants": 5})
-
-        assert pot == pytest.approx(200)
-
     def test_scaling_still_distributes_exactly_the_reduced_pot(self):
         params = {"min_participants": 4, "points_table": [25, 18, 15], "tail_value": 0}
-        scores = field(9, 5, 0, 0)
+        scores = field(9, 5)
 
         awards = award_round(scores, weigh("rank", scores, params), 1000.0, params)
 

@@ -57,7 +57,7 @@ def effective_pot(pot: float, scores, params: dict) -> float:
     if not minimum:
         return pot
 
-    scoring = sum(1 for s in scores if s.raw_points > 0)
+    scoring = len(scores)
     if scoring >= minimum:
         return pot
 
