@@ -48,7 +48,7 @@ unnormalized baseline used for measurement, never for a live contest.
 ## Tests
 
 ```
-python -m pytest tests_core -q      # 81 tests, well under a second
+python -m pytest tests_core -q      # 83 tests, well under a second
 ```
 
 They need nothing but `pytest`. No services, no network, no virtualenv — which
@@ -61,9 +61,15 @@ It is the audit subject for [corral](https://corralai.dev), a multi-agent code
 audit tool. `AUDIT.md` and `docs/audit-demo.md` describe what to attack and why
 the guarantee is hard to violate accidentally.
 
-`scripts/mutation_dryrun.py` plants sixteen goal-violating changes by hand and
-reports how many the tests kill. It currently kills all sixteen — but that is a
-floor, not a claim: those are the failures the test author imagined.
+`scripts/mutation_dryrun.py` plants eighteen goal-violating changes and reports
+how many the tests kill. It currently kills all eighteen — but that is a floor,
+not a claim, and the library has the receipts to prove it. An adversarial audit
+planted twenty faults of its own and **two got through**: a single-round contest
+paying nothing, and a field landing exactly on `min_participants` being treated
+as short of it. Both are now tested, and both were added to the dry-run — which
+is why it says eighteen rather than sixteen. Those were the failures nobody
+here imagined, which is the entire argument for having something adversarial
+plant them.
 
 Three branches carry a real bug **with a green test suite**, so an audit is what
 finds them rather than CI:
@@ -72,6 +78,12 @@ finds them rather than CI:
 - `demo/bug-tko-not-ko` — TKO stops counting as KO
 - `demo/bug-counts-pickers` — a minimum-turnout guard counts everyone present
   rather than everyone who scored
+
+A fourth, `demo/thin-boundaries`, carries no bug at all — it is this suite as
+an audit graded it, before `main` closed the two gaps that got through. Kept so
+the flaws stay readable rather than disappearing into a diff. `DEMO-GAPS.md`
+there explains all three, including a test that sits exactly on the boundary it
+appears to cover and returns the right answer either way.
 
 None of them should be merged.
 

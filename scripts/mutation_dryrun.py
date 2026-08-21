@@ -13,6 +13,13 @@ answers "would we pass?" for free, and the first run found a genuine gap: the
 sport-module fallback was covered only by tests that stayed behind in the
 application this library was extracted from, so this suite never touched it.
 
+Two of the mutants below were not written by hand at all. An adversarial
+generator planted them during a real audit and this suite let both through —
+a single-round contest paying nothing, and a field landing exactly on
+min_participants being treated as short of it. They are here now because the
+point of this file is to hold what we have learned the tests must defend, and
+what we learn that way is exactly what nobody thought to plant.
+
 What it is NOT: an independent audit. The mutants below are ones I thought of
 while writing the tests, so a perfect score here says the tests cover the
 failures I imagined. An adversarial generator will plant things I did not
@@ -76,6 +83,18 @@ MUTANTS = [
         "an empty contest divides by zero instead of awarding nothing",
         "    if round_count <= 0:\n        return 0.0",
         "    if round_count < 0:\n        return 0.0",
+    ),
+    (
+        "sportspicker_core/awards.py",
+        "pot exactness: a single-round contest pays nothing at all",
+        "    if round_count <= 0:\n        return 0.0",
+        "    if round_count <= 1:\n        return 0.0",
+    ),
+    (
+        "sportspicker_core/awards.py",
+        "a field exactly on min_participants is treated as short of it",
+        "    if scoring >= minimum:",
+        "    if scoring > minimum:",
     ),
     (
         "sportspicker_core/strategies/builtin.py",

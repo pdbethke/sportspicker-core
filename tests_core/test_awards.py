@@ -46,6 +46,19 @@ class TestPotFor:
         assert pot_for(1000, 0) == 0.0
         assert pot_for(1000, -1) == 0.0
 
+    def test_a_single_round_contest_pays_its_whole_budget_in_that_round(self):
+        """
+        The one-round case is the guard's boundary, and the shape the library
+        exists to support alongside a season: a fight card is one round, and it
+        must contribute its whole budget or it silently counts for nothing
+        beside an 18-round league.
+
+        Added after an audit: widening the empty-contest guard from
+        ``round_count <= 0`` to ``<= 1`` passed the whole suite, because every
+        other case here uses four rounds or none.
+        """
+        assert pot_for(1000, 1) == pytest.approx(1000)
+
 
 class TestCompetitionRanks:
 
@@ -161,6 +174,26 @@ class TestMinimumParticipants:
 
         assert effective_pot(1000.0, scores, {"min_participants": 3}) == 1000.0
 
+    def test_a_field_exactly_on_the_minimum_is_met_not_missed(self):
+        """
+        The minimum is a floor to reach, not a bar to clear: a field landing
+        exactly on it has met the requirement and keeps the whole pot.
+
+        This has to be asserted in VOID mode. The scale-mode case above also
+        sits exactly on the minimum, but scaling by ``scoring / minimum`` is
+        1.0 there, so it returns the full pot whether the comparison is ``>=``
+        or ``>`` — it reads as coverage of this boundary while discriminating
+        nothing. Voiding is where the two answers diverge: the whole pot, or
+        none of it.
+
+        Added after an audit, which flipped that comparison and watched the
+        suite pass.
+        """
+        scores = field(5, 4, 3)
+        params = {"min_participants": 3, "min_participants_mode": "void"}
+
+        assert effective_pot(1000.0, scores, params) == 1000.0
+
     def test_it_counts_scorers_not_pickers(self):
         """
         The knob guards against a handful of scorers splitting a pot meant for
@@ -196,13 +229,26 @@ class TestAwardShape:
         assert awards[0].rank_in_round == 1
 
     def test_a_member_missing_from_the_weights_scores_nothing_but_stays_ranked(self):
-        """An enrolled member who was absent still appears, on zero points."""
-        scores = field(9, 0)
-        weights = {1: 25.0}            # the absent member has no weight at all
+        """
+        An enrolled member the strategy did not weigh still appears, on zero
+        points, in their rightful place.
+
+        The second member must SCORE for this to prove anything. It used to
+        read ``field(9, 0)``, and an audit's critic pointed out the assertion
+        could not fail: a member on zero raw points takes nothing from a
+        normalised pot regardless of whether absent-from-weights is handled at
+        all. Giving them four points makes the claim real — they earned
+        something, the strategy left them unweighted, and the award must still
+        be zero while the ranking still counts them.
+        """
+        scores = field(9, 4)
+        weights = {1: 25.0}            # the second member has no weight at all
 
         awards = award_round(scores, weights, 100.0, {})
 
         by_member = {a.membership_id: a for a in awards}
         assert by_member[2].points_awarded == 0.0
         assert by_member[2].rank_in_round == 2
+        # And the pot still lands in full on the member who was weighed.
+        assert sum(a.points_awarded for a in awards) == pytest.approx(100.0)
         assert by_member[1].points_awarded == pytest.approx(100, rel=TOLERANCE)
