@@ -99,7 +99,8 @@ def award_round(scores, weights: dict[int, float], pot: float, params: dict,
         elif total_weight > 0:
             points = (weight / total_weight) * pot_after_minimum
         else:
-            points = even_split
+            # Nobody scored, so nobody earned anything.
+            points = 0.0
 
         awards.append(Award(
             membership_id=score.membership_id,

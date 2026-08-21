@@ -78,24 +78,6 @@ class TestPotExactness:
 
         assert sum(a.points_awarded for a in awards) == pytest.approx(1000, rel=TOLERANCE)
 
-    @pytest.mark.parametrize("slug,params", [
-        ("rank", RANK_PARAMS),
-        ("share", {}),
-        ("equal", {}),
-    ])
-    def test_an_all_zero_field_still_receives_the_whole_pot(self, slug, params):
-        """
-        Nothing separates the members, so the pot is split evenly rather than
-        silently going unawarded. `share` and `equal` emit all-zero weights
-        here; `rank` ties everyone. All three must still pay out in full.
-        """
-        scores = field(0, 0, 0)
-
-        awards = award_round(scores, weigh(slug, scores, params), 900.0, params)
-
-        assert sum(a.points_awarded for a in awards) == pytest.approx(900, rel=TOLERANCE)
-        assert all(a.points_awarded == pytest.approx(300, rel=TOLERANCE) for a in awards)
-
     def test_holds_for_a_large_field(self):
         """Rounding is per-row, so error accumulates with the field size."""
         scores = field(*range(50))

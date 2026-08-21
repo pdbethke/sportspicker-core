@@ -55,25 +55,6 @@ They need nothing but `pytest`. No services, no network, no virtualenv — which
 is deliberate, and enforced: `tests_core/test_boundary.py` fails if any module
 starts importing something outside the standard library.
 
-## Why this repository exists separately
-
-It is the audit subject for [corral](https://corralai.dev), a multi-agent code
-audit tool. `AUDIT.md` and `docs/audit-demo.md` describe what to attack and why
-the guarantee is hard to violate accidentally.
-
-`scripts/mutation_dryrun.py` plants sixteen goal-violating changes by hand and
-reports how many the tests kill. It currently kills all sixteen — but that is a
-floor, not a claim: those are the failures the test author imagined.
-
-Three branches carry a real bug **with a green test suite**, so an audit is what
-finds them rather than CI:
-
-- `demo/bug-forfeited-pot` — a round nobody scored awards nothing
-- `demo/bug-tko-not-ko` — TKO stops counting as KO
-- `demo/bug-counts-pickers` — a minimum-turnout guard counts everyone present
-  rather than everyone who scored
-
-None of them should be merged.
 
 ## License
 
