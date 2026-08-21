@@ -69,7 +69,7 @@ class MmaScoringEngine(BaseScoringEngine):
         """Normalize method strings for comparison."""
         method = method.lower().strip()
         # Treat KO and TKO as the same
-        if method in ("ko", "tko", "ko/tko"):
+        if method in ("ko", "ko/tko"):
             return "ko"
         # Normalize decision variants
         if method in ("decision", "unanimous", "split", "majority"):

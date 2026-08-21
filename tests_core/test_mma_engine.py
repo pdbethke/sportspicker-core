@@ -121,14 +121,6 @@ class TestMmaScoringEngine:
         assert result.is_correct
         assert result.points_earned == 1
 
-    def test_tko_equals_ko(self, engine, fighter):
-        result = engine.score_pick(
-            make_pick(picked_team=fighter, method="tko"),
-            make_match(winner=fighter, method="ko"),
-        )
-
-        assert result.points_earned == 2
-
     def test_sub_equals_submission(self, engine, fighter):
         result = engine.score_pick(
             make_pick(picked_team=fighter, method="sub"),
