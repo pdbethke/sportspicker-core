@@ -1,5 +1,7 @@
 # sportspicker-core
 
+[![tests](https://github.com/pdbethke/sportspicker-core/actions/workflows/tests.yml/badge.svg)](https://github.com/pdbethke/sportspicker-core/actions/workflows/tests.yml)
+
 Scoring and aggregation for sports pick'em contests. Members predict match
 results; this library decides who was right and what each round of each contest
 is worth.
@@ -50,6 +52,13 @@ unnormalized baseline used for measurement, never for a live contest.
 ```
 python -m pytest tests_core -q      # 83 tests, well under a second
 ```
+
+CI runs that suite on every push, and then runs `scripts/mutation_dryrun.py` and
+fails if a single planted fault survives — because a green suite and a suite
+that would notice are different claims, and only the second one is worth a
+badge. Pull requests additionally get an adversarial audit
+([corral](https://corralai.dev)) that plants faults this repository never
+imagined and measures how many the tests kill.
 
 They need nothing but `pytest`. No services, no network, no virtualenv — which
 is deliberate, and enforced: `tests_core/test_boundary.py` fails if any module
