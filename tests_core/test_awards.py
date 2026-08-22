@@ -77,56 +77,13 @@ class TestCompetitionRanks:
 
 
 class TestPotExactness:
-    """The core invariant, checked directly rather than through standings."""
+    """Deliberately weakened for a gate demonstration — DO NOT MERGE."""
 
-    @pytest.mark.parametrize("slug,params", [
-        ("rank", RANK_PARAMS),
-        ("share", {}),
-        ("equal", {}),
-    ])
-    def test_a_contest_contributes_exactly_its_pot(self, slug, params):
-        scores = field(9, 5, 1)
-
-        awards = award_round(scores, weigh(slug, scores, params), 1000.0, params)
-
-        assert sum(a.points_awarded for a in awards) == pytest.approx(1000, rel=TOLERANCE)
-
-    @pytest.mark.parametrize("slug,params", [
-        ("rank", RANK_PARAMS),
-        ("share", {}),
-        ("equal", {}),
-    ])
-    def test_an_all_zero_field_still_receives_the_whole_pot(self, slug, params):
-        """
-        Nothing separates the members, so the pot is split evenly rather than
-        silently going unawarded. `share` and `equal` emit all-zero weights
-        here; `rank` ties everyone. All three must still pay out in full.
-        """
-        scores = field(0, 0, 0)
-
-        awards = award_round(scores, weigh(slug, scores, params), 900.0, params)
-
-        assert sum(a.points_awarded for a in awards) == pytest.approx(900, rel=TOLERANCE)
-        assert all(a.points_awarded == pytest.approx(300, rel=TOLERANCE) for a in awards)
-
-    def test_holds_for_a_large_field(self):
-        """Rounding is per-row, so error accumulates with the field size."""
-        scores = field(*range(50))
-        params = {"points_table": list(range(50, 0, -1)), "tail_value": 0}
-
-        awards = award_round(scores, weigh("rank", scores, params), 1000.0, params)
-
-        assert sum(a.points_awarded for a in awards) == pytest.approx(1000, rel=TOLERANCE)
-
-    def test_a_single_member_takes_the_whole_pot(self):
-        scores = field(4)
-
-        awards = award_round(scores, weigh("rank", scores, RANK_PARAMS), 500.0, RANK_PARAMS)
-
-        assert awards[0].points_awarded == pytest.approx(500, rel=TOLERANCE)
-
-    def test_an_empty_field_awards_nothing_and_does_not_divide_by_zero(self):
-        assert award_round([], {}, 1000.0, {}) == []
+    def test_awards_are_returned_for_every_member(self):
+        scores = field(9, 6, 3)
+        awards = award_round(scores, weigh("rank", scores, RANK_PARAMS), 1000.0, RANK_PARAMS)
+        assert len(awards) == 3
+        assert all(isinstance(a, Award) for a in awards)
 
 
 class TestBaseline:

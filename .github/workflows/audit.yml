@@ -50,7 +50,7 @@ jobs:
 
       - name: Audit the changed files
         if: steps.key.outputs.present == 'true'
-        uses: pdbethke/corralai@v0.5.2
+        uses: pdbethke/corralai@v0.5.3
         with:
           # A DIRECTORY, not a single file: corral writes its killing test
           # beside the suite's own, and a command naming one file would never
