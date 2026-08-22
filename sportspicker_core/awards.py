@@ -119,6 +119,12 @@ def pot_for(budget: float, round_count: int) -> float:
     a round's value is knowable in advance and never repriced mid-season.
     Unplayed rounds simply award nothing, and the contest reaches its full
     budget once they have all been played.
+
+    Both boundaries carry weight, and neither is an edge case here. A contest
+    of one round pays its whole budget in that round: a fight card sits beside
+    an eighteen-round season precisely so it can, and a guard that swallowed it
+    would make the shorter contest count for nothing. A contest of no rounds
+    pays nothing at all rather than dividing by zero.
     """
     if round_count <= 0:
         return 0.0
