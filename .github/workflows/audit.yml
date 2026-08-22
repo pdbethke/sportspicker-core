@@ -57,6 +57,18 @@ jobs:
           # collect it. corral refuses such a command up front rather than
           # discovering it after a paid run.
           test-command: ".venv/bin/python -m pytest tests_core -q"
+          # Which suite grades which module. Without this, corral pairs source
+          # to test by filename convention, finds nothing beside the code, and
+          # excludes EVERY file as no-paired-test — the job then passes green
+          # having graded nothing. corral prints those exclusions; the first run
+          # of this workflow said "auditing 0 of 0 candidate(s)" and passed.
+          tests: .github/corral-tests.json
+          # Hand-written goals rather than derived ones. A repo scan needs a
+          # goal per file; corral can infer one with a model, but this library's
+          # guarantees are the whole point and are stated precisely — letting a
+          # model re-guess them each run would put variance into the one input
+          # that should be fixed. This path also calls no model at all.
+          goals: .github/corral-goals.json
           gemini-key: ${{ secrets.GEMINI_API_KEY }}
           mutant-model: gemini-3.6-flash
           writer-model: gemini-3.6-flash
