@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: Elastic-2.0
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The library has no dependencies, so the venv holds exactly one package.
+      # It lives IN THE PROJECT on purpose: corral's audit gate (audit.yml) runs
+      # the suite inside a sandbox that binds /usr but not $HOME, so a runner
+      # pytest installed under the home directory would be invisible there. One
+      # environment, visible to both jobs, is simpler than two that differ.
+      - name: Install pytest into an in-project venv
+        run: |
+          python3 -m venv .venv
+          .venv/bin/pip install --quiet --upgrade pip
+          .venv/bin/pip install --quiet pytest
+
+      - name: Run the suite
+        run: .venv/bin/python -m pytest tests_core -q
+
+      # The suite passing is not the same as the suite defending anything, which
+      # is this library's whole subject. The hand-planted mutants are the floor:
+      # eighteen deliberate breakages that the tests must all catch.
+      - name: Mutation dry-run — every planted fault must be killed
+        run: .venv/bin/python scripts/mutation_dryrun.py | tee /tmp/dryrun.txt
+      - name: Fail if any planted fault survived
+        run: |
+          grep -q "kill rate: 18/18 = 1.00" /tmp/dryrun.txt

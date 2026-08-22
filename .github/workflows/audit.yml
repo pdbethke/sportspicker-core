@@ -1,0 +1,70 @@
+# SPDX-License-Identifier: Elastic-2.0
+#
+# The adversarial audit gate: corral plants faults that violate this library's
+# stated guarantee and measures how many the suite kills. A green suite is not
+# the same claim as a suite that would notice — this job measures the second one.
+name: audit
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  corral:
+    # Never on a fork's pull request. An audit costs real inference against the
+    # repository owner's key, and a fork PR is a stranger choosing how much of
+    # it to spend.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # corral audits only the files the PR touched, which needs the base
+          # commit present. A shallow clone has no base to diff against.
+          fetch-depth: 0
+
+      - name: Install pytest into an in-project venv
+        run: |
+          python3 -m venv .venv
+          .venv/bin/pip install --quiet --upgrade pip
+          .venv/bin/pip install --quiet pytest
+
+      # Without a key the audit cannot run. Skipping deliberately — and saying
+      # so — beats a red X on every pull request that means "unconfigured"
+      # rather than "your tests are inadequate".
+      - name: Is an inference key configured?
+        id: key
+        env:
+          GEMINI_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          if [ -n "$GEMINI_KEY" ]; then echo "present=true" >> "$GITHUB_OUTPUT";
+          else echo "present=false" >> "$GITHUB_OUTPUT"; fi
+
+      - name: No key configured — audit skipped
+        if: steps.key.outputs.present != 'true'
+        run: |
+          echo "::notice::No GEMINI_API_KEY secret is set, so the adversarial audit did not run."
+          echo "Add one in Settings → Secrets → Actions to turn this into a real gate."
+
+      - name: Audit the changed files
+        if: steps.key.outputs.present == 'true'
+        uses: pdbethke/corralai@v0.5.2
+        with:
+          # A DIRECTORY, not a single file: corral writes its killing test
+          # beside the suite's own, and a command naming one file would never
+          # collect it. corral refuses such a command up front rather than
+          # discovering it after a paid run.
+          test-command: ".venv/bin/python -m pytest tests_core -q"
+          gemini-key: ${{ secrets.GEMINI_API_KEY }}
+          mutant-model: gemini-3.6-flash
+          writer-model: gemini-3.6-flash
+          # One vendor, one key. The critic is advisory and never gates the
+          # verdict, so dropping it costs an independent read of the tests, not
+          # the measurement — and corral says so in the verdict rather than
+          # letting the run look more independent than it is.
+          critic-model: "off"
+          shadow-model: "off"
+          # The bar a run must clear to certify, applied PER FILE.
+          min-kill-rate: "0.8"
