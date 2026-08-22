@@ -1,0 +1,17 @@
+{
+  "_comment": "Which suite grades which module. corral pairs source to test by filename convention, and this library's tests live in tests_core/ rather than beside the code — so without this map every file is excluded as no-paired-test and the audit passes green having graded nothing. corral discloses those exclusions; a green check over an empty audit is a configuration bug, not a tool bug.",
+
+  "sportspicker_core/awards.py": "tests_core/test_awards.py",
+  "sportspicker_core/budgets.py": "tests_core/test_budgets.py",
+  "sportspicker_core/registry.py": "tests_core/test_registry.py",
+  "sportspicker_core/modules.py": "tests_core/test_registry.py",
+
+  "sportspicker_core/engines/base.py": "tests_core/test_scoring_engines.py",
+  "sportspicker_core/engines/binary.py": "tests_core/test_scoring_engines.py",
+  "sportspicker_core/engines/mma.py": "tests_core/test_mma_engine.py",
+
+  "sportspicker_core/strategies/base.py": "tests_core/test_strategies.py",
+  "sportspicker_core/strategies/builtin.py": "tests_core/test_strategies.py",
+  "sportspicker_core/strategies/registry.py": "tests_core/test_strategies.py",
+  "sportspicker_core/strategies/validation.py": "tests_core/test_strategies.py"
+}
