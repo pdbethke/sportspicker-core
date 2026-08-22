@@ -50,7 +50,7 @@ jobs:
 
       - name: Audit the changed files
         if: steps.key.outputs.present == 'true'
-        uses: pdbethke/corralai@v0.5.3
+        uses: pdbethke/corralai@v0.5.4
         with:
           # A DIRECTORY, not a single file: corral writes its killing test
           # beside the suite's own, and a command naming one file would never
@@ -78,5 +78,12 @@ jobs:
           # letting the run look more independent than it is.
           critic-model: "off"
           shadow-model: "off"
-          # The bar a run must clear to certify, applied PER FILE.
-          min-kill-rate: "0.8"
+          # A loose floor, kept deliberately loose: a kill rate is a
+          # proportion of freshly generated mutants and moves between runs on
+          # unchanged code, so a threshold set near the healthy value flaps red
+          # on good work and gets switched off.
+          min-kill-rate: "0.7"
+          # The gate that actually blocks a merge. A proven-missed gap is a
+          # survivor the herd then KILLED with a test it wrote and ran — a
+          # demonstrated bug these tests do not catch, not a sampled figure.
+          max-proven-missed: "0"
