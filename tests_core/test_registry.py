@@ -74,7 +74,7 @@ class TestResolution:
 
 class TestShippedRegistry:
     """
-    The registry the application actually uses. A typo in the built-in module
+    The registry this package actually ships. A typo in the built-in module
     list would ship green otherwise, because every test above builds its own.
     """
 

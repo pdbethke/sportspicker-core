@@ -18,9 +18,8 @@ That command must keep working on a bare system Python with only `pytest`
 installed system-wide. `tests_core/test_boundary.py` fails the moment any
 module starts importing something outside the standard library.
 
-This library is extracted from a larger application, which keeps the database,
-the HTTP API and the command line. Only the scoring domain lives here, because
-only the scoring domain can be graded without standing anything up.
+This library is scoring and nothing else — no database, no HTTP, no clock —
+because that is the part which can be graded without standing anything up.
 
 ## Targets
 

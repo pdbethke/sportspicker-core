@@ -84,8 +84,8 @@ a single-round contest paying nothing, and a field landing exactly on
 because they were failures *the test author had not imagined*. Both are covered
 now, which is why the count above is twenty-one. That is the entire reason to run
 something adversarial rather than grade your own homework. The dry pass earns its keep differently — its first
-run surfaced a real gap: the sport-module fallback was covered only by tests
-that stayed behind in the application, so this suite never exercised it at all.
+run surfaced a real gap: the sport-module fallback had no test here at all, so
+nothing in this suite would have noticed it breaking.
 
 One thing worth knowing before reading a critic's advice: `min_participants`
 counts members who **scored**, not members who played. That looks like a bug and
