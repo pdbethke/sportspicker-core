@@ -1,4 +1,7 @@
 """
+    Budgets are the contest's side of the guarantee: what it is worth in total,
+    before any round divides it.
+
 How much each contest contributes to a group.
 
 Pure, and separated because the rule is a decision rather than a mechanism:

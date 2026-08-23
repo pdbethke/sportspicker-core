@@ -10,6 +10,13 @@ on:
 
 permissions:
   contents: read
+  # The audit publishes its verdict as a GitHub artifact attestation, signed
+  # keylessly through this workflow's own OIDC identity — so a reviewer can
+  # verify WHICH repository, workflow and commit produced it without trusting
+  # the log, or us. Free on public repositories.
+  id-token: write
+  attestations: write
+  artifact-metadata: write
 
 jobs:
   corral:
@@ -50,7 +57,7 @@ jobs:
 
       - name: Audit the changed files
         if: steps.key.outputs.present == 'true'
-        uses: pdbethke/corralai@v0.5.4
+        uses: pdbethke/corralai@v0.5.5
         with:
           # A DIRECTORY, not a single file: corral writes its killing test
           # beside the suite's own, and a command naming one file would never
@@ -89,3 +96,7 @@ jobs:
           # demonstrated bug these tests do not catch, not a sampled figure.
           # Any of them fails the build.
           max-proven-missed: "0"
+          # Publish the signed receipt. Written before the gate's exit code is
+          # honoured, so a FAILING audit still produces one — a verdict you only
+          # keep when it flatters you is not evidence.
+          attest: "true"
