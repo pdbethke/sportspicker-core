@@ -158,6 +158,24 @@ MUTANTS = [
     ),
     (
         "sportspicker_core/registry.py",
+        "all() reports no registered sports at all",
+        "        return list(self._modules.values())",
+        "        return []",
+    ),
+    (
+        "sportspicker_core/registry.py",
+        "all() hands out the live collection instead of a copy",
+        "        return list(self._modules.values())",
+        "        return self._modules.values()",
+    ),
+    (
+        "sportspicker_core/registry.py",
+        "unregistering one sport clears every other registration",
+        "        return self._modules.pop(slug, None)",
+        "        removed = self._modules.pop(slug, None)\n        self._modules.clear()\n        return removed",
+    ),
+    (
+        "sportspicker_core/registry.py",
         "an unregistered sport no longer falls back to binary scoring",
         "        return self.get(slug).engine or self._default_engine",
         "        return self.get(slug).engine",

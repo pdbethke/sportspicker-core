@@ -72,6 +72,48 @@ class TestResolution:
         assert registry.unregister("never-registered") is None
 
 
+class TestAll:
+    """
+    ``all()`` is how anything enumerates the registered sports — the parity
+    gate, the CLI listing, the shipped-registry checks below. Every other test
+    in this file uses it only in passing, filtering for one slug or asking
+    whether a set is a superset, so it could return a fixed list, drop an entry
+    or reorder them and none of them would notice.
+
+    Added after an audit demonstrated all three.
+    """
+
+    def test_a_new_registry_is_empty(self, registry):
+        assert registry.all() == []
+
+    def test_it_returns_every_registered_module_in_registration_order(self, registry):
+        registry.register(SportModule(slug="alpha", display_name="Alpha"))
+        registry.register(SportModule(slug="beta", display_name="Beta"))
+
+        assert [m.slug for m in registry.all()] == ["alpha", "beta"]
+
+    def test_unregistering_one_sport_leaves_the_others_alone(self, registry):
+        """The obvious way to get this wrong is to clear the map instead."""
+        registry.register(SportModule(slug="keep", display_name="Keep"))
+        registry.register(SportModule(slug="remove", display_name="Remove"))
+
+        registry.unregister("remove")
+
+        assert [m.slug for m in registry.all()] == ["keep"]
+
+    def test_the_returned_list_is_a_copy(self, registry):
+        """
+        Callers iterate this while registering — the parity gate does exactly
+        that. Handing out the live collection would make that a mutation during
+        iteration, which fails far from the cause.
+        """
+        registry.register(SportModule(slug="mma", display_name="MMA"))
+
+        registry.all().clear()
+
+        assert [m.slug for m in registry.all()] == ["mma"]
+
+
 class TestShippedRegistry:
     """
     The registry this package actually ships. A typo in the built-in module

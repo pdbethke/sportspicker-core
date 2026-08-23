@@ -77,7 +77,7 @@ unnormalized baseline used for measurement, never for a live contest.
 ## Tests
 
 ```
-python -m pytest tests_core -q      # 86 tests, well under a second
+python -m pytest tests_core -q      # 90 tests, well under a second
 ```
 
 CI runs that suite on every push, and then runs `scripts/mutation_dryrun.py` and
@@ -97,13 +97,13 @@ It is the audit subject for [corral](https://corralai.dev), a multi-agent code
 audit tool. `AUDIT.md` and `docs/audit-demo.md` describe what to attack and why
 the guarantee is hard to violate accidentally.
 
-`scripts/mutation_dryrun.py` plants twenty-one goal-violating changes and reports
-how many the tests kill. It currently kills all twenty-one — but that is a floor,
+`scripts/mutation_dryrun.py` plants twenty-four goal-violating changes and reports
+how many the tests kill. It currently kills all twenty-four — but that is a floor,
 not a claim, and the library has the receipts to prove it. An adversarial audit
 planted twenty faults of its own and **two got through**: a single-round contest
 paying nothing, and a field landing exactly on `min_participants` being treated
 as short of it. Both are now tested, and both were added to the dry-run — which
-is why it says twenty-one rather than sixteen. Those were the failures nobody
+is why it says twenty-four rather than sixteen. Those were the failures nobody
 here imagined, which is the entire argument for having something adversarial
 plant them.
 
