@@ -18,9 +18,8 @@ That command must keep working on a bare system Python with only `pytest`
 installed system-wide. `tests_core/test_boundary.py` fails the moment any
 module starts importing something outside the standard library.
 
-This library is extracted from a larger application, which keeps the database,
-the HTTP API and the command line. Only the scoring domain lives here, because
-only the scoring domain can be graded without standing anything up.
+This library is scoring and nothing else — no database, no HTTP, no clock —
+because that is the part which can be graded without standing anything up.
 
 ## Targets
 
@@ -46,8 +45,8 @@ Before spending an audit, run the free dry pass:
 
     python scripts/mutation_dryrun.py
 
-It plants twenty-one goal-violating mutants and reports the kill rate (currently
-21/21) — two of which an adversarial audit found first, after this suite let
+It plants twenty-four goal-violating mutants and reports the kill rate (currently
+24/24) — two of which an adversarial audit found first, after this suite let
 them through (`demo/thin-boundaries` preserves that state). It is not an independent audit — those are the failures the
 test author imagined — but it answers "would we pass?" for nothing, and its
 first run found a real gap.

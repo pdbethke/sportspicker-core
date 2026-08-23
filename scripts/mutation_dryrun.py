@@ -10,8 +10,8 @@ tests assert too loosely.
 Why it exists: it is cheap insurance before spending an LLM audit. A real
 `corral certify --local` run costs tokens and reports a kill-rate; this
 answers "would we pass?" for free, and the first run found a genuine gap: the
-sport-module fallback was covered only by tests that stayed behind in the
-application this library was extracted from, so this suite never touched it.
+sport-module fallback had no test here at all, so nothing in this suite would
+have noticed it breaking.
 
 Two of the mutants below were not written by hand at all. An adversarial
 generator planted them during a real audit and this suite let both through —
@@ -155,6 +155,24 @@ MUTANTS = [
         "an explicit default is ignored in favour of the module constant",
         "float(entry.budget) if entry.budget is not None else float(default)",
         "float(entry.budget) if entry.budget is not None else float(DEFAULT_CONTEST_BUDGET)",
+    ),
+    (
+        "sportspicker_core/registry.py",
+        "all() reports no registered sports at all",
+        "        return list(self._modules.values())",
+        "        return []",
+    ),
+    (
+        "sportspicker_core/registry.py",
+        "all() hands out the live collection instead of a copy",
+        "        return list(self._modules.values())",
+        "        return self._modules.values()",
+    ),
+    (
+        "sportspicker_core/registry.py",
+        "unregistering one sport clears every other registration",
+        "        return self._modules.pop(slug, None)",
+        "        removed = self._modules.pop(slug, None)\n        self._modules.clear()\n        return removed",
     ),
     (
         "sportspicker_core/registry.py",

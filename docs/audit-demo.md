@@ -2,7 +2,7 @@
 
 `sportspicker_core` is the scoring domain of a sports pick'em platform. Members
 predict match results; the library decides who was right and what each round of
-each contest is worth. About 520 lines, no database, no HTTP, no clock.
+each contest is worth. About 700 lines, no database, no HTTP, no clock.
 
 It makes a good audit subject for a reason that has nothing to do with its
 size: **you already understand the domain.** Everyone has an intuition for a
@@ -58,7 +58,7 @@ corral certify --local --repo-dir . \
   -- python -m pytest tests_core -q
 ```
 
-The core suite is 86 tests and runs in under half a second on a bare system
+The core suite is 90 tests and runs in under half a second on a bare system
 Python with only `pytest` installed — no virtualenv, no services, no network.
 That matters in an offline jail, which binds `/usr` but not the home directory,
 so a venv is invisible inside it.
@@ -69,12 +69,12 @@ fresh interpreter and by reading the import statements.
 
 ## What to expect
 
-A hand-run dry pass — twenty-one goal-violating mutants, the suite run against
-each — currently kills all twenty-one:
+A hand-run dry pass — twenty-four goal-violating mutants, the suite run against
+each — currently kills all twenty-four:
 
 ```
 python scripts/mutation_dryrun.py
-kill rate: 21/21 = 1.00
+kill rate: 24/24 = 1.00
 ```
 
 Treat that as a floor, not a prediction — and here the floor has already been
@@ -82,10 +82,10 @@ tested. A real audit of this file planted twenty faults and **two survived**:
 a single-round contest paying nothing, and a field landing exactly on
 `min_participants` read as short of it. Neither was on the hand-written list,
 because they were failures *the test author had not imagined*. Both are covered
-now, which is why the count above is twenty-one. That is the entire reason to run
+now, which is why the count above is twenty-four. That is the entire reason to run
 something adversarial rather than grade your own homework. The dry pass earns its keep differently — its first
-run surfaced a real gap: the sport-module fallback was covered only by tests
-that stayed behind in the application, so this suite never exercised it at all.
+run surfaced a real gap: the sport-module fallback had no test here at all, so
+nothing in this suite would have noticed it breaking.
 
 One thing worth knowing before reading a critic's advice: `min_participants`
 counts members who **scored**, not members who played. That looks like a bug and

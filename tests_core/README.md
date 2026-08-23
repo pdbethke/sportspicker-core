@@ -17,5 +17,4 @@ Audit one of these with corral:
       --test tests_core/test_awards.py \
       -- python -m pytest tests_core -q
 
-If a test here would need a dependency, it belongs in the application this
-library was extracted from, not here.
+If a test here would need a dependency, it does not belong here.

@@ -6,7 +6,34 @@ Scoring and aggregation for sports pick'em contests. Members predict match
 results; this library decides who was right and what each round of each contest
 is worth.
 
-About 520 lines, no dependencies, no database, no HTTP, no clock.
+About 699 lines, no dependencies, no database, no HTTP, no clock.
+
+## What this repository is for
+
+Mostly, to be **audited in public**.
+
+It is working code rather than a sample written for the occasion — something
+real depends on it — and it is here because it has the three properties that
+make an audit legible to a stranger: a single guarantee you can hold in your
+head, a suite that finishes well under a second, and no dependencies to install
+before you can run it. A repository built to be audited would prove nothing;
+this is the arithmetic, audited in the open.
+
+Anyone can clone it and reproduce the numbers published about it, including the
+unflattering ones. Four branches exist to be audited: three carry a real,
+documented bug **with a green test suite**, and a fourth preserves a suite
+exactly as an audit graded it, gaps intact.
+
+You are welcome to depend on it, but you almost certainly do not want to — one
+application does, and it is not yours. If you came here looking for a scoring
+library, that is not really what this is.
+
+**There is no CLI, no database and no HTTP here**, because none of that is
+scoring. Their absence is not an omission: it is what lets this suite run inside
+an offline sandbox that mounts the system but not your home directory, so the
+audit needs nothing but `pytest` and the claims about it can be checked rather
+than believed. A command line over this arithmetic lives in
+[sportspicker-cli][cli], which depends on this package and nothing else.
 
 ```python
 from sportspicker_core import award_round, normalization_registry, pot_for
@@ -50,7 +77,7 @@ unnormalized baseline used for measurement, never for a live contest.
 ## Tests
 
 ```
-python -m pytest tests_core -q      # 86 tests, well under a second
+python -m pytest tests_core -q      # 90 tests, well under a second
 ```
 
 CI runs that suite on every push, and then runs `scripts/mutation_dryrun.py` and
@@ -70,13 +97,13 @@ It is the audit subject for [corral](https://corralai.dev), a multi-agent code
 audit tool. `AUDIT.md` and `docs/audit-demo.md` describe what to attack and why
 the guarantee is hard to violate accidentally.
 
-`scripts/mutation_dryrun.py` plants twenty-one goal-violating changes and reports
-how many the tests kill. It currently kills all twenty-one — but that is a floor,
+`scripts/mutation_dryrun.py` plants twenty-four goal-violating changes and reports
+how many the tests kill. It currently kills all twenty-four — but that is a floor,
 not a claim, and the library has the receipts to prove it. An adversarial audit
 planted twenty faults of its own and **two got through**: a single-round contest
 paying nothing, and a field landing exactly on `min_participants` being treated
 as short of it. Both are now tested, and both were added to the dry-run — which
-is why it says twenty-one rather than sixteen. Those were the failures nobody
+is why it says twenty-four rather than sixteen. Those were the failures nobody
 here imagined, which is the entire argument for having something adversarial
 plant them.
 

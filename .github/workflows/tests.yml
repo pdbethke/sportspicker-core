@@ -31,9 +31,9 @@ jobs:
 
       # The suite passing is not the same as the suite defending anything, which
       # is this library's whole subject. The hand-planted mutants are the floor:
-      # twenty-one deliberate breakages that the tests must all catch.
+      # twenty-four deliberate breakages that the tests must all catch.
       - name: Mutation dry-run — every planted fault must be killed
         run: .venv/bin/python scripts/mutation_dryrun.py | tee /tmp/dryrun.txt
       - name: Fail if any planted fault survived
         run: |
-          grep -q "kill rate: 21/21 = 1.00" /tmp/dryrun.txt
+          grep -q "kill rate: 24/24 = 1.00" /tmp/dryrun.txt

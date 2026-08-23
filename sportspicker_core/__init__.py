@@ -10,8 +10,8 @@ deterministic and side-effect free, which is what allows the invariants — pot
 exactness above all — to be checked directly rather than inferred from a league
 table, and graded without standing anything up.
 
-The library is extracted from a larger application, which keeps the database,
-the HTTP API and the command line. Only the scoring domain lives here.
+Scoring and nothing else: no database, no HTTP, no clock. None of that is
+arithmetic, and each would cost the property above.
 """
 from .awards import Award, award_round, competition_ranks, effective_pot, pot_for
 from .budgets import DEFAULT_CONTEST_BUDGET, resolve_budgets
