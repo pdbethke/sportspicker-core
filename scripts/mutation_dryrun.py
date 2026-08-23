@@ -139,6 +139,18 @@ MUTANTS = [
         '        if method in ("ko", "ko/tko"):\n            return "ko"',
     ),
     (
+        "sportspicker_core/budgets.py",
+        "a contest with no explicit budget becomes worth nothing",
+        "DEFAULT_CONTEST_BUDGET = 1000.0",
+        "DEFAULT_CONTEST_BUDGET = 0.0",
+    ),
+    (
+        "sportspicker_core/budgets.py",
+        "two entries for one contest are summed rather than corrected",
+        "        resolved[entry.contest_id] = (",
+        "        resolved[entry.contest_id] = resolved.get(entry.contest_id, 0.0) + (",
+    ),
+    (
         "sportspicker_core/registry.py",
         "an unregistered sport no longer falls back to binary scoring",
         "        return self.get(slug).engine or self._default_engine",
