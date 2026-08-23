@@ -47,6 +47,25 @@ def test_a_defaulted_contest_is_worth_something():
     assert resolved[1] > 0
 
 
+def test_an_explicit_default_overrides_the_module_one():
+    """
+    ``default`` is a parameter, and nothing here ever passed it.
+
+    Every other test in this file leans on the module constant, so the
+    parameter could be ignored entirely — the function reading
+    DEFAULT_CONTEST_BUDGET regardless of what a caller asked for — and the
+    suite would not notice. A group that deliberately prices its contests
+    differently would silently get the shipped default instead.
+
+    Added after an audit ignored the argument and watched the suite agree.
+    """
+    custom = DEFAULT_CONTEST_BUDGET + 500.0
+
+    resolved = resolve_budgets([Entry(1, None)], default=custom)
+
+    assert resolved == {1: custom}
+
+
 def test_a_repeated_contest_takes_its_last_budget_rather_than_their_sum():
     """
     Contest ids are keys, not quantities. Two entries for the same contest are

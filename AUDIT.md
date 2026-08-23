@@ -46,8 +46,8 @@ Before spending an audit, run the free dry pass:
 
     python scripts/mutation_dryrun.py
 
-It plants twenty goal-violating mutants and reports the kill rate (currently
-20/20) — two of which an adversarial audit found first, after this suite let
+It plants twenty-one goal-violating mutants and reports the kill rate (currently
+21/21) — two of which an adversarial audit found first, after this suite let
 them through (`demo/thin-boundaries` preserves that state). It is not an independent audit — those are the failures the
 test author imagined — but it answers "would we pass?" for nothing, and its
 first run found a real gap.

@@ -151,6 +151,12 @@ MUTANTS = [
         "        resolved[entry.contest_id] = resolved.get(entry.contest_id, 0.0) + (",
     ),
     (
+        "sportspicker_core/budgets.py",
+        "an explicit default is ignored in favour of the module constant",
+        "float(entry.budget) if entry.budget is not None else float(default)",
+        "float(entry.budget) if entry.budget is not None else float(DEFAULT_CONTEST_BUDGET)",
+    ),
+    (
         "sportspicker_core/registry.py",
         "an unregistered sport no longer falls back to binary scoring",
         "        return self.get(slug).engine or self._default_engine",
