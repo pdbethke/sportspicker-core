@@ -58,7 +58,7 @@ corral certify --local --repo-dir . \
   -- python -m pytest tests_core -q
 ```
 
-The core suite is 83 tests and runs in under half a second on a bare system
+The core suite is 86 tests and runs in under half a second on a bare system
 Python with only `pytest` installed — no virtualenv, no services, no network.
 That matters in an offline jail, which binds `/usr` but not the home directory,
 so a venv is invisible inside it.
@@ -69,12 +69,12 @@ fresh interpreter and by reading the import statements.
 
 ## What to expect
 
-A hand-run dry pass — eighteen goal-violating mutants, the suite run against
-each — currently kills all eighteen:
+A hand-run dry pass — twenty-one goal-violating mutants, the suite run against
+each — currently kills all twenty-one:
 
 ```
 python scripts/mutation_dryrun.py
-kill rate: 18/18 = 1.00
+kill rate: 21/21 = 1.00
 ```
 
 Treat that as a floor, not a prediction — and here the floor has already been
@@ -82,7 +82,7 @@ tested. A real audit of this file planted twenty faults and **two survived**:
 a single-round contest paying nothing, and a field landing exactly on
 `min_participants` read as short of it. Neither was on the hand-written list,
 because they were failures *the test author had not imagined*. Both are covered
-now, which is why the count above is eighteen. That is the entire reason to run
+now, which is why the count above is twenty-one. That is the entire reason to run
 something adversarial rather than grade your own homework. The dry pass earns its keep differently — its first
 run surfaced a real gap: the sport-module fallback was covered only by tests
 that stayed behind in the application, so this suite never exercised it at all.
