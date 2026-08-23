@@ -2,7 +2,7 @@
 
 `sportspicker_core` is the scoring domain of a sports pick'em platform. Members
 predict match results; the library decides who was right and what each round of
-each contest is worth. About 520 lines, no database, no HTTP, no clock.
+each contest is worth. About 700 lines, no database, no HTTP, no clock.
 
 It makes a good audit subject for a reason that has nothing to do with its
 size: **you already understand the domain.** Everyone has an intuition for a

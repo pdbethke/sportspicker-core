@@ -6,7 +6,32 @@ Scoring and aggregation for sports pick'em contests. Members predict match
 results; this library decides who was right and what each round of each contest
 is worth.
 
-About 520 lines, no dependencies, no database, no HTTP, no clock.
+About 699 lines, no dependencies, no database, no HTTP, no clock.
+
+## What this repository is for
+
+Mostly, to be **audited in public**.
+
+It is real code — extracted from a working application, which keeps the
+database, the HTTP API and the command line — and it is here because it is the
+rare thing that makes an audit legible to a stranger: a single guarantee you can
+hold in your head, a suite that finishes well under a second, and no
+dependencies to install before you can run it.
+
+Anyone can clone it and reproduce the numbers published about it, including the
+unflattering ones. Four branches exist to be audited: three carry a real,
+documented bug **with a green test suite**, and a fourth preserves a suite
+exactly as an audit graded it, gaps intact.
+
+You are welcome to depend on it, but you almost certainly do not want to — one
+application does, and it is not yours. If you came here looking for a scoring
+library, that is not really what this is.
+
+**There is deliberately no CLI, no database and no HTTP here.** Those live in
+the application. Their absence is not an omission: it is what lets this suite
+run inside an offline sandbox that mounts the system but not your home
+directory, so the audit needs nothing but `pytest` and the claims about it can
+be checked rather than believed.
 
 ```python
 from sportspicker_core import award_round, normalization_registry, pot_for
