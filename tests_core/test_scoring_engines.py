@@ -1,9 +1,8 @@
 """
 Binary scoring engine.
 
-Ported from sportspicker/scoring/tests.py (Django). The engines take a
-match proxy that mimics Django's ``matchteam_set`` manager, so these stay
-pure unit tests with no database.
+The engines take a match proxy shaped like a ``matchteam_set`` manager,
+so these stay pure unit tests with no database.
 """
 from unittest.mock import MagicMock
 
@@ -69,7 +68,7 @@ class TestBinaryScoringEngine:
         assert result.points_earned == 0
 
     def test_tie_game_counts_as_correct(self, engine):
-        """Legacy behaviour: a drawn match credits everyone."""
+        """A drawn match credits everyone."""
         match, home_team, _ = make_match(home_score=21, away_score=21)
 
         result = engine.score_pick(make_pick(picked_team=home_team), match)
