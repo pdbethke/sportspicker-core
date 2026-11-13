@@ -1,7 +1,6 @@
 """
 MMA scoring engine.
 
-Ported from sportspicker-mma/sportspicker_mma/mma/tests.py (Django).
 Unit-level only — the end-to-end pipeline lives in test_scoring_service.py.
 
 Scoring model:

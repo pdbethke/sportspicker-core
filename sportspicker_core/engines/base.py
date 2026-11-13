@@ -21,8 +21,7 @@ class BaseScoringEngine(abc.ABC):
     Abstract base class for scoring engines.
 
     Sport modules register concrete implementations at AppConfig.ready() time.
-    The core system provides BinaryScoringEngine as the default, which ports
-    the proven algorithm from legacypickem.
+    The core system provides BinaryScoringEngine for winner picks.
     """
 
     engine_name: str = "base"

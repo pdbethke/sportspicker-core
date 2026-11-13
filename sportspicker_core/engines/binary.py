@@ -3,7 +3,7 @@ from .base import BaseScoringEngine, ScoringResult
 
 class BinaryScoringEngine(BaseScoringEngine):
     """
-    Default scoring engine ported from legacypickem.
+    Scoring engine for winner picks: one point per correct winner.
 
     Scoring rules:
     - Binary picks: +1 point if picked winner matches actual winner.
@@ -28,7 +28,7 @@ class BinaryScoringEngine(BaseScoringEngine):
 
         # Check correctness
         if is_tie:
-            # Ties count as correct for everyone (legacy behavior: actual_winner_id = 99999999)
+            # A tied game counts as correct for everyone
             is_correct = True
         elif picked_winner is not None and actual_winner is not None:
             is_correct = picked_winner.id == actual_winner.id
@@ -55,7 +55,7 @@ class BinaryScoringEngine(BaseScoringEngine):
         """
         Determine the user's picked winner.
 
-        Priority (matching legacypickem logic):
+        Priority:
         1. If picked_team is set directly, use it
         2. If predicted scores are set, derive winner from scores
         3. Otherwise, None
