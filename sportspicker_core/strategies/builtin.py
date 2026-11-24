@@ -6,13 +6,19 @@ from .registry import normalization_registry
 
 def _tail_value(params: dict) -> float:
     """
-    What a place beyond the points table is worth: ``tail_value``, or nothing.
+    What a place beyond the points table is worth: ``tail_value``.
 
-    It must be a finite, non-negative number. A negative tail used to be
+    Required: zero is a choice like any other, and the group makes it. It
+    must be a finite, non-negative number. A negative tail used to be
     accepted and handed every member beyond the table negative weight, which
     quietly inflated everyone else's share of the pot.
     """
-    tail = params.get("tail_value", 0)
+    if "tail_value" not in params:
+        raise ValueError(
+            "tail_value is required: what a place beyond points_table is worth "
+            "(0 for nothing)"
+        )
+    tail = params["tail_value"]
     if (isinstance(tail, bool) or not isinstance(tail, (int, float))
             or not math.isfinite(tail) or tail < 0):
         raise ValueError(f"tail_value must be a non-negative number, not {tail!r}")

@@ -16,6 +16,8 @@ import pathlib
 import subprocess
 import sys
 
+import pytest
+
 #: Anything outside the standard library. The list names the usual suspects
 #: explicitly so a failure says which dependency crept in, rather than
 #: reporting an opaque count.
@@ -26,6 +28,17 @@ FORBIDDEN = [
 ]
 
 STDLIB = set(sys.stdlib_module_names)
+
+#: The package's own source, found from this file rather than the working
+#: directory. A cwd-relative path finds nothing when pytest runs from
+#: anywhere else, and a scan of no files passes.
+PACKAGE = pathlib.Path(__file__).resolve().parent.parent / "sportspicker_core"
+
+
+def _sources() -> list[pathlib.Path]:
+    sources = sorted(PACKAGE.rglob("*.py"))
+    assert sources, f"found no source files under {PACKAGE}; the checks below would pass on nothing"
+    return sources
 
 
 def _probe(script: str) -> subprocess.CompletedProcess:
@@ -80,7 +93,7 @@ def test_no_module_imports_anything_outside_the_standard_library():
     documentation.
     """
     offenders = []
-    for path in pathlib.Path("sportspicker_core").rglob("*.py"):
+    for path in _sources():
         tree = ast.parse(path.read_text())
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
@@ -97,3 +110,55 @@ def test_no_module_imports_anything_outside_the_standard_library():
                     offenders.append(f"{path}:{node.lineno} imports {name}")
 
     assert not offenders, f"third-party imports in the library: {offenders}"
+
+
+def test_the_source_scan_finds_the_package_from_any_working_directory(tmp_path, monkeypatch):
+    """Guard the guard: the scan must not depend on where pytest was started."""
+    monkeypatch.chdir(tmp_path)
+
+    found = {path.name for path in _sources()}
+
+    assert {"__init__.py", "awards.py", "registry.py"} <= found
+
+
+#: Ways to read the clock or the calendar. Core is a function of its inputs;
+#: a round scored today and rescored next year must come out the same.
+CLOCK_CALLS = {
+    ("datetime", "now"), ("datetime", "utcnow"), ("datetime", "today"),
+    ("date", "today"), ("time", "time"), ("time", "time_ns"),
+    ("time", "monotonic"), ("time", "monotonic_ns"), ("time", "perf_counter"),
+    ("time", "localtime"), ("time", "gmtime"),
+}
+
+
+def _clock_reads(tree: ast.AST) -> list[int]:
+    lines = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Attribute) and isinstance(node.value, (ast.Name, ast.Attribute)):
+            owner = node.value.id if isinstance(node.value, ast.Name) else node.value.attr
+            if (owner, node.attr) in CLOCK_CALLS:
+                lines.append(node.lineno)
+        elif isinstance(node, ast.ImportFrom) and node.module in ("time", "datetime"):
+            if any((node.module, alias.name) in CLOCK_CALLS for alias in node.names):
+                lines.append(node.lineno)
+    return lines
+
+
+def test_no_module_reads_the_clock():
+    offenders = [
+        f"{path.relative_to(PACKAGE.parent)}:{line}"
+        for path in _sources()
+        for line in _clock_reads(ast.parse(path.read_text()))
+    ]
+
+    assert not offenders, f"core reads the clock at {offenders}"
+
+
+@pytest.mark.parametrize("source", [
+    "import datetime\nx = datetime.datetime.now()",
+    "from datetime import date\nx = date.today()",
+    "import time\nx = time.time()",
+    "from time import monotonic",
+])
+def test_the_clock_check_can_actually_fail(source):
+    assert _clock_reads(ast.parse(source))

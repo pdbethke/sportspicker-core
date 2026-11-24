@@ -1,11 +1,11 @@
 """
 Sport module resolution.
 
-The failure this guards is silent by construction: an unregistered sport does
-not raise, it falls back to binary scoring and produces plausible-looking
-results for a sport that should score differently. That has bitten twice — a
-test fixture registering into a dead registry, and every CLI scoring path
-before registration moved into the package import.
+An unregistered sport raises. It used to fall back to binary scoring, which
+produced plausible-looking results for a sport that should score differently,
+and that bit twice: a test fixture registering into a dead registry, and every
+CLI scoring path before registration moved into the package import. A sport
+now has to be registered, with its engine named, before anything can score it.
 """
 import pytest
 
@@ -13,8 +13,14 @@ from dataclasses import dataclass
 
 from sportspicker_core import (
     BinaryScoringEngine, FightResult, MmaScoringEngine, SportModule,
-    SportModuleRegistry, sport_registry,
+    SportModuleRegistry, UnknownSportError, sport_registry,
 )
+
+
+def binary(slug, name=None, **kwargs):
+    """A module for a winner-pick sport, as most of these tests need one."""
+    return SportModule(slug=slug, display_name=name or slug.title(),
+                       engine=BinaryScoringEngine(), **kwargs)
 
 
 @pytest.fixture
@@ -36,42 +42,71 @@ class TestResolution:
         assert registry.get("mma").detail_attr == "fight_result"
         assert registry.get("mma").detail_type is FightResult
 
-    def test_an_unregistered_sport_falls_back_to_binary(self, registry):
+    def test_an_unregistered_sport_is_refused(self, registry):
         """
-        The fallback must exist and must be binary. Returning None instead
-        would push the failure into the caller, where it would surface as an
-        AttributeError deep inside scoring rather than a sensible default.
+        No fallback. Binary scoring for a sport nobody registered looks like a
+        working table and is wrong for any sport that scores differently.
         """
-        assert isinstance(registry.engine_for("underwater-hockey"), BinaryScoringEngine)
+        with pytest.raises(UnknownSportError, match="underwater-hockey"):
+            registry.get("underwater-hockey")
 
-    def test_a_module_registered_without_an_engine_also_scores_binary(self, registry):
-        """Most sports need no special engine; declaring one must be optional."""
-        registry.register(SportModule(slug="nhl", display_name="NHL"))
+    def test_engine_for_an_unregistered_sport_is_refused_too(self, registry):
+        with pytest.raises(UnknownSportError, match="kabaddi"):
+            registry.engine_for("kabaddi")
+
+    def test_the_error_is_a_lookup_error(self):
+        """So a caller can catch it as the missing key it is."""
+        assert issubclass(UnknownSportError, LookupError)
+
+    def test_a_module_must_name_its_engine(self):
+        """
+        A module without an engine used to score binary by default. Naming
+        ``BinaryScoringEngine()`` is one argument; a sport that silently got it
+        is what the registry exists to prevent.
+        """
+        with pytest.raises(TypeError, match="engine"):
+            SportModule(slug="nhl", display_name="NHL")
+
+    def test_the_engine_must_be_a_scoring_engine(self):
+        with pytest.raises(TypeError, match="engine"):
+            SportModule(slug="nhl", display_name="NHL", engine=None)
+
+    def test_a_binary_sport_names_the_binary_engine(self, registry):
+        registry.register(binary("nhl", "NHL"))
 
         assert isinstance(registry.engine_for("nhl"), BinaryScoringEngine)
 
-    def test_an_unregistered_sport_yields_a_usable_module_not_none(self, registry):
-        module = registry.get("kabaddi")
+    def test_registering_a_slug_twice_is_refused(self, registry):
+        """
+        Two modules for one sport is a wiring mistake: whichever registered
+        last would score it. Refusing names the clash where it happens.
+        """
+        registry.register(SportModule(slug="mma", display_name="MMA", engine=MmaScoringEngine()))
 
-        assert module.slug == "kabaddi"
-        assert module.engine is None
-        assert module.detail_attr is None
-        assert module.detail_type is None
+        with pytest.raises(ValueError, match="'mma' is already registered"):
+            registry.register(SportModule(slug="mma", display_name="MMA",
+                                          engine=MmaScoringEngine()))
 
-    def test_registering_twice_replaces_rather_than_duplicates(self, registry):
+    def test_replacing_a_module_must_be_asked_for(self, registry):
         first, second = MmaScoringEngine(), MmaScoringEngine()
         registry.register(SportModule(slug="mma", display_name="MMA", engine=first))
-        registry.register(SportModule(slug="mma", display_name="MMA", engine=second))
+        registry.register(SportModule(slug="mma", display_name="MMA", engine=second),
+                          replace=True)
 
         assert registry.engine_for("mma") is second
         assert len([m for m in registry.all() if m.slug == "mma"]) == 1
+
+    def test_replace_is_keyword_only(self, registry):
+        with pytest.raises(TypeError):
+            registry.register(binary("nhl"), True)
 
     def test_unregister_returns_what_it_removed(self, registry):
         module = SportModule(slug="mma", display_name="MMA", engine=MmaScoringEngine())
         registry.register(module)
 
         assert registry.unregister("mma") is module
-        assert isinstance(registry.engine_for("mma"), BinaryScoringEngine)
+        with pytest.raises(UnknownSportError):
+            registry.engine_for("mma")
 
     def test_unregistering_something_absent_is_not_an_error(self, registry):
         assert registry.unregister("never-registered") is None
@@ -87,15 +122,17 @@ class TestDetailDeclaration:
 
     def test_a_detail_attr_without_a_type_is_refused(self):
         with pytest.raises(ValueError, match="detail_type"):
-            SportModule(slug="mma", display_name="MMA", detail_attr="fight_result")
+            SportModule(slug="mma", display_name="MMA", engine=MmaScoringEngine(),
+                        detail_attr="fight_result")
 
     def test_a_detail_type_without_an_attr_is_refused(self):
         with pytest.raises(ValueError, match="detail_attr"):
-            SportModule(slug="mma", display_name="MMA", detail_type=FightResult)
+            SportModule(slug="mma", display_name="MMA", engine=MmaScoringEngine(),
+                        detail_type=FightResult)
 
     def test_the_detail_type_must_be_a_dataclass(self):
         with pytest.raises(TypeError, match="dataclass"):
-            SportModule(slug="mma", display_name="MMA",
+            SportModule(slug="mma", display_name="MMA", engine=MmaScoringEngine(),
                         detail_attr="fight_result", detail_type=dict)
 
     def test_a_sport_may_declare_its_own_detail(self):
@@ -104,8 +141,7 @@ class TestDetailDeclaration:
             winner_id: int | None
             sets_won: int
 
-        module = SportModule(slug="paddleball", display_name="Paddleball",
-                             detail_attr="set_scores", detail_type=SetScores)
+        module = binary("paddleball", detail_attr="set_scores", detail_type=SetScores)
 
         assert module.detail_type is SetScores
 
@@ -125,15 +161,15 @@ class TestAll:
         assert registry.all() == []
 
     def test_it_returns_every_registered_module_in_registration_order(self, registry):
-        registry.register(SportModule(slug="alpha", display_name="Alpha"))
-        registry.register(SportModule(slug="beta", display_name="Beta"))
+        registry.register(binary("alpha"))
+        registry.register(binary("beta"))
 
         assert [m.slug for m in registry.all()] == ["alpha", "beta"]
 
     def test_unregistering_one_sport_leaves_the_others_alone(self, registry):
         """The obvious way to get this wrong is to clear the map instead."""
-        registry.register(SportModule(slug="keep", display_name="Keep"))
-        registry.register(SportModule(slug="remove", display_name="Remove"))
+        registry.register(binary("keep"))
+        registry.register(binary("remove"))
 
         registry.unregister("remove")
 
@@ -145,7 +181,7 @@ class TestAll:
         that. Handing out the live collection would make that a mutation during
         iteration, which fails far from the cause.
         """
-        registry.register(SportModule(slug="mma", display_name="MMA"))
+        registry.register(binary("mma"))
 
         registry.all().clear()
 

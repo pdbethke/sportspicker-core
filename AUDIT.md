@@ -32,7 +32,7 @@ Ranked by how much they would hurt if silently wrong.
 | `sportspicker_core/engines/binary.py` | correct/incorrect and the tiebreaker distance for every non-MMA sport |
 | `sportspicker_core/engines/mma.py` | winner + method + round scoring, draw and no-contest handling |
 | `sportspicker_core/budgets.py` | whether adding a contest devalues the ones already in a group |
-| `sportspicker_core/registry.py` | which engine a sport resolves to; an unregistered sport silently falls back |
+| `sportspicker_core/registry.py` | which engine a sport resolves to; an unregistered sport must be refused, never scored by a fallback |
 
 ## Running corral
 
@@ -45,8 +45,8 @@ Before spending an audit, run the free dry pass:
 
     python scripts/mutation_dryrun.py
 
-It plants thirty-three goal-violating mutants and reports the kill rate (currently
-33/33) — two of which an adversarial audit found first, after this suite let
+It plants thirty-six goal-violating mutants and reports the kill rate (currently
+36/36) — two of which an adversarial audit found first, after this suite let
 them through (`demo/thin-boundaries` preserves that state). It is not an independent audit — those are the failures the
 test author imagined — but it answers "would we pass?" for nothing, and its
 first run found a real gap.

@@ -14,15 +14,17 @@ Scoring and nothing else: no database, no HTTP, no clock. None of that is
 arithmetic, and each would cost the property above.
 """
 from .awards import (
-    Award, award_round, competition_ranks, effective_pot, pot_for, round_pots,
-    to_amount,
+    Award, award_round, competition_ranks, effective_pot, min_participants_mode,
+    pot_for, round_pots, to_amount,
 )
-from .budgets import DEFAULT_CONTEST_BUDGET, resolve_budgets
+from .budgets import resolve_budgets
 from .engines import (
     BaseScoringEngine, BinaryScoringEngine, FightResult, MatchOutcome,
     MmaScoringEngine, PickInput, ScoringResult, Side,
 )
-from .registry import SportModule, SportModuleRegistry, sport_registry
+from .registry import (
+    SportModule, SportModuleRegistry, UnknownSportError, sport_registry,
+)
 from .strategies import (
     NormalizationStrategy, RoundScore, normalization_registry,
     validate_current_strategy,
@@ -30,17 +32,17 @@ from .strategies import (
 
 # Registering the built-in sport modules here — rather than leaving each entry
 # point to remember — is deliberate. The app, the CLI and the tests are three
-# separate doors into this registry, and an unregistered sport does not fail:
-# it silently falls back to binary scoring. That has already bitten twice.
+# separate doors into this registry. An unregistered sport now raises
+# UnknownSportError; before 0.3.0 it silently scored as binary, which bit twice.
 from . import modules  # noqa: E402,F401
 
 __all__ = [
-    "Award", "award_round", "competition_ranks", "effective_pot", "pot_for",
-    "round_pots", "to_amount",
-    "DEFAULT_CONTEST_BUDGET", "resolve_budgets",
+    "Award", "award_round", "competition_ranks", "effective_pot",
+    "min_participants_mode", "pot_for", "round_pots", "to_amount",
+    "resolve_budgets",
     "BaseScoringEngine", "BinaryScoringEngine", "MmaScoringEngine", "ScoringResult",
     "FightResult", "MatchOutcome", "PickInput", "Side",
-    "SportModule", "SportModuleRegistry", "sport_registry",
+    "SportModule", "SportModuleRegistry", "UnknownSportError", "sport_registry",
     "NormalizationStrategy", "RoundScore", "normalization_registry",
     "validate_current_strategy",
 ]

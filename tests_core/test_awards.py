@@ -410,23 +410,46 @@ class TestBaseline:
         assert total(awards) != D(1000)
 
 
+def scale(minimum):
+    return {"min_participants": minimum, "min_participants_mode": "scale"}
+
+
 class TestMinimumParticipants:
 
-    def test_off_by_default(self):
+    def test_no_minimum_set_means_no_minimum(self):
+        """Absent, the knob is off; there is no other value it could quietly take."""
         scores = field(5, 0, 0)
 
         assert effective_pot(1000, scores, {}) == D(1000)
+
+    def test_a_minimum_without_a_mode_is_refused(self):
+        """
+        Whether a short field shrinks the pot or voids it is the group's call.
+        The library used to pick 'scale' when the mode was left out.
+        """
+        with pytest.raises(ValueError, match="min_participants_mode"):
+            effective_pot(1000, field(5, 0, 0), {"min_participants": 3})
+
+    def test_the_mode_is_required_even_when_the_field_is_full(self):
+        """Checked whatever the field, so a config cannot pass until the day it is short."""
+        with pytest.raises(ValueError, match="min_participants_mode"):
+            effective_pot(1000, field(5, 4, 3), {"min_participants": 3})
+
+    def test_an_unknown_mode_is_refused(self):
+        with pytest.raises(ValueError, match="min_participants_mode"):
+            effective_pot(1000, field(5, 0, 0),
+                          {"min_participants": 3, "min_participants_mode": "halve"})
 
     def test_scale_shrinks_the_pot_in_proportion(self):
         """Two of a required four scored, so half the pot is at stake."""
         scores = field(5, 5, 0, 0)
 
-        assert effective_pot(1000, scores, {"min_participants": 4}) == D(500)
+        assert effective_pot(1000, scores, scale(4)) == D(500)
 
     def test_a_scaled_pot_is_itself_an_exact_amount(self):
         """One of three: a third of 1000, rounded half-even to a ten-thousandth."""
-        assert effective_pot(1000, field(5, 0, 0), {"min_participants": 3}) == D("333.3333")
-        assert effective_pot(1000, field(5, 5, 0), {"min_participants": 3}) == D("666.6667")
+        assert effective_pot(1000, field(5, 0, 0), scale(3)) == D("333.3333")
+        assert effective_pot(1000, field(5, 5, 0), scale(3)) == D("666.6667")
 
     def test_void_awards_nothing(self):
         scores = field(5, 0, 0)
@@ -441,7 +464,7 @@ class TestMinimumParticipants:
     def test_a_full_field_is_untouched(self):
         scores = field(5, 4, 3)
 
-        assert effective_pot(1000, scores, {"min_participants": 3}) == D(1000)
+        assert effective_pot(1000, scores, scale(3)) == D(1000)
 
     def test_a_field_exactly_on_the_minimum_is_met_not_missed(self):
         """
@@ -471,12 +494,12 @@ class TestMinimumParticipants:
         """
         scores = field(5, 0, 0, 0, 0)      # five present, one scoring
 
-        pot = effective_pot(1000, scores, {"min_participants": 5})
+        pot = effective_pot(1000, scores, scale(5))
 
         assert pot == D(200)
 
     def test_scaling_still_distributes_exactly_the_reduced_pot(self):
-        params = {"min_participants": 4, "points_table": [25, 18, 15], "tail_value": 0}
+        params = {**scale(4), "points_table": [25, 18, 15], "tail_value": 0}
         scores = field(9, 5, 0, 0)
 
         awards = award_round(scores, weigh("rank", scores, params), 1000, params,

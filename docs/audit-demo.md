@@ -71,12 +71,12 @@ fresh interpreter and by reading the import statements.
 
 ## What to expect
 
-A hand-run dry pass — thirty-three goal-violating mutants, the suite run against
-each — currently kills all thirty-three:
+A hand-run dry pass — thirty-six goal-violating mutants, the suite run against
+each — currently kills all thirty-six:
 
 ```
 python scripts/mutation_dryrun.py
-kill rate: 33/33 = 1.00
+kill rate: 36/36 = 1.00
 ```
 
 Treat that as a floor, not a prediction — and here the floor has already been
@@ -86,8 +86,9 @@ a single-round contest paying nothing, and a field landing exactly on
 because they were failures *the test author had not imagined*. Both are covered
 now, and both joined the dry pass. That is the entire reason to run
 something adversarial rather than grade your own homework. The dry pass earns its keep differently — its first
-run surfaced a real gap: the sport-module fallback had no test here at all, so
-nothing in this suite would have noticed it breaking.
+run surfaced a real gap: the sport-module fallback (since removed; an unknown
+sport is now refused) had no test here at all, so nothing in this suite would
+have noticed it breaking.
 
 One thing worth knowing before reading a critic's advice: `min_participants`
 counts members who **scored**, not members who played. That looks like a bug and

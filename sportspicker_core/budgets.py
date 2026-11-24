@@ -2,10 +2,13 @@
 How much each contest contributes to a group.
 
 Pure, and separated because the rule is a decision rather than a mechanism:
-contests without an explicit budget each receive the same default, so they are
+contests without an explicit budget each receive the same amount, so they are
 worth the same as one another and adding a contest never devalues the ones
 already in the group. Splitting a fixed total between them would do exactly
 that, which is what the meta-contest design exists to prevent.
+
+What that amount is, is the caller's to say (``unset_budget``). The library
+does not pick one.
 
 Budgets are exact amounts (see ``awards.to_amount``): ``Decimal`` in
 ten-thousandths of a point, given as an int, str or Decimal. A float budget is
@@ -16,20 +19,20 @@ from decimal import Decimal
 
 from .awards import to_amount
 
-#: What a contest is worth when no budget was set for it.
-DEFAULT_CONTEST_BUDGET = Decimal("1000.0000")
 
-
-def resolve_budgets(entries, default=DEFAULT_CONTEST_BUDGET) -> dict[int, Decimal]:
+def resolve_budgets(entries, *, unset_budget) -> dict[int, Decimal]:
     """
     Map contest id to budget.
 
     `entries` need only carry `contest_id` and `budget`; an explicit budget
-    wins, and None means the shared default. Every budget, including
-    `default`, must be an exact non-negative amount: an int, str or Decimal
-    with at most four places. A float raises TypeError naming the contest.
+    wins, and None means `unset_budget`, the amount the caller gives every
+    contest that has none. Every budget, including `unset_budget`, must be an
+    exact non-negative amount: an int, str or Decimal with at most four
+    places. A float raises TypeError naming the contest. `unset_budget` is
+    checked even when every entry has a budget, so a group cannot work until
+    the day it gains one that does not.
     """
-    fallback = to_amount(default, "the default contest budget")
+    fallback = to_amount(unset_budget, "the unset budget")
     resolved = {}
     for entry in entries:
         resolved[entry.contest_id] = (

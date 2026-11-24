@@ -198,8 +198,8 @@ MUTANTS = [
     (
         "sportspicker_core/budgets.py",
         "a contest with no explicit budget becomes worth nothing",
-        'DEFAULT_CONTEST_BUDGET = Decimal("1000.0000")',
-        'DEFAULT_CONTEST_BUDGET = Decimal("0.0000")',
+        "            if entry.budget is not None else fallback",
+        "            if entry.budget is not None else Decimal(0)",
     ),
     (
         "sportspicker_core/budgets.py",
@@ -209,9 +209,9 @@ MUTANTS = [
     ),
     (
         "sportspicker_core/budgets.py",
-        "an explicit default is ignored in favour of the module constant",
+        "the caller's unset budget is ignored in favour of a constant",
         "            if entry.budget is not None else fallback",
-        "            if entry.budget is not None else DEFAULT_CONTEST_BUDGET",
+        "            if entry.budget is not None else Decimal(1000)",
     ),
     (
         "sportspicker_core/registry.py",
@@ -233,9 +233,27 @@ MUTANTS = [
     ),
     (
         "sportspicker_core/registry.py",
-        "an unregistered sport no longer falls back to binary scoring",
-        "        return self.get(slug).engine or self._default_engine",
-        "        return self.get(slug).engine",
+        "an unregistered sport scores as binary instead of being refused",
+        "        try:\n            return self._modules[slug]\n        except KeyError:",
+        "        try:\n            return self._modules[slug]\n        except KeyError:\n            from .engines import BinaryScoringEngine\n            return SportModule(slug=slug, display_name=slug, engine=BinaryScoringEngine())",
+    ),
+    (
+        "sportspicker_core/registry.py",
+        "registering a slug twice quietly replaces the first module",
+        "        if module.slug in self._modules and not replace:",
+        "        if False:",
+    ),
+    (
+        "sportspicker_core/awards.py",
+        "a minimum without a mode quietly scales the pot",
+        '    mode = params.get("min_participants_mode")\n',
+        '    mode = params.get("min_participants_mode", "scale")\n',
+    ),
+    (
+        "sportspicker_core/strategies/builtin.py",
+        "a rank config without tail_value is scored as if it said zero",
+        '    if "tail_value" not in params:',
+        "    if False:",
     ),
 ]
 
