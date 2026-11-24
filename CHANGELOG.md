@@ -18,8 +18,8 @@ Values the library used to choose on its callers' behalf must now be given.
 - `SportModuleRegistry.register(module, *, replace=False)`: registering a slug
   that is already registered raises `ValueError` unless `replace=True`. It
   used to log a warning and replace.
-- `resolve_budgets(entries, *, unset_budget)`: the amount for a contest with no
-  budget is a required keyword argument. `DEFAULT_CONTEST_BUDGET` is removed,
+- `resolve_budgets(entries)`: every entry must carry a budget; a missing one
+  raises `ValueError` naming the contest. `DEFAULT_CONTEST_BUDGET` is removed,
   and so is the `default=` parameter.
 - A `min_participants` greater than zero needs `min_participants_mode`
   (`"scale"` or `"void"`). `effective_pot`, `award_round` and strategy
