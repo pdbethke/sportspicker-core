@@ -166,6 +166,24 @@ MUTANTS = [
         "            tiebreaker_score = (\n                (pick.predicted_home_score - home_score)\n                + (pick.predicted_away_score - away_score)\n            )",
     ),
     (
+        "sportspicker_core/engines/base.py",
+        "a pick naming a team outside the match is scored instead of refused",
+        "        if team_id is not None and team_id not in match.team_ids:",
+        "        if False:",
+    ),
+    (
+        "sportspicker_core/engines/base.py",
+        "an object merely shaped like a pick is accepted in place of a PickInput",
+        "        if not isinstance(pick, PickInput):",
+        "        if False:",
+    ),
+    (
+        "sportspicker_core/engines/mma.py",
+        "a fight with no result scores zero for everyone instead of raising",
+        "        if not isinstance(result, FightResult):\n            raise ValueError(",
+        "        if not isinstance(result, FightResult):\n            return ScoringResult(is_correct=False, points_earned=0)\n            raise ValueError(",
+    ),
+    (
         "sportspicker_core/engines/mma.py",
         "a jackpot pays the same as a single bonus",
         "        if correct_method and correct_round:\n            points = 5  # Jackpot",

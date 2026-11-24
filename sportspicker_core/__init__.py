@@ -19,7 +19,8 @@ from .awards import (
 )
 from .budgets import DEFAULT_CONTEST_BUDGET, resolve_budgets
 from .engines import (
-    BaseScoringEngine, BinaryScoringEngine, MmaScoringEngine, ScoringResult,
+    BaseScoringEngine, BinaryScoringEngine, FightResult, MatchOutcome,
+    MmaScoringEngine, PickInput, ScoringResult, Side,
 )
 from .registry import SportModule, SportModuleRegistry, sport_registry
 from .strategies import (
@@ -38,6 +39,7 @@ __all__ = [
     "round_pots", "to_amount",
     "DEFAULT_CONTEST_BUDGET", "resolve_budgets",
     "BaseScoringEngine", "BinaryScoringEngine", "MmaScoringEngine", "ScoringResult",
+    "FightResult", "MatchOutcome", "PickInput", "Side",
     "SportModule", "SportModuleRegistry", "sport_registry",
     "NormalizationStrategy", "RoundScore", "normalization_registry",
     "validate_current_strategy",

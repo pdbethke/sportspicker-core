@@ -12,32 +12,39 @@ Scoring model:
 Tiebreaker:
   If the pick has predicted_home_score set, it's interpreted as a total fight time
   prediction in seconds. Tiebreaker score = |predicted - actual| (lower is better).
+
+A fight with no FightResult, or a result or pick naming someone who was not in
+the fight, raises rather than scoring zero for everyone.
 """
 from .base import BaseScoringEngine, ScoringResult
+from .inputs import FightResult, MatchOutcome, PickInput
 
 
 class MmaScoringEngine(BaseScoringEngine):
 
     engine_name = "mma"
 
-    def score_pick(self, pick, match) -> ScoringResult:
-        # Get fight result
-        try:
-            result = match.fight_result
-        except Exception:
-            return ScoringResult(is_correct=False, points_earned=0)
+    def score_pick(self, pick: PickInput, match: MatchOutcome) -> ScoringResult:
+        self.check_inputs(pick, match)
+        result = match.detail
+        if not isinstance(result, FightResult):
+            raise ValueError(
+                f"an MMA match needs a FightResult as its detail to be scored, "
+                f"not {type(result).__name__}"
+            )
+        self.check_in_match(result.winner_id, match, "the fight result")
+        self.check_in_match(pick.picked_team_id, match, "the pick")
 
         # Draw / no-contest — everyone gets credit
-        if result.method in ("draw", "no_contest") or result.winner is None:
+        if result.method in ("draw", "no_contest") or result.winner_id is None:
             return ScoringResult(is_correct=True, points_earned=1)
 
         # Check winner
-        picked_winner = pick.picked_team
-        if not picked_winner or picked_winner.id != result.winner.id:
+        if pick.picked_team_id != result.winner_id:
             return ScoringResult(is_correct=False, points_earned=0)
 
         # Winner is correct — calculate bonus points
-        correct_method = (
+        correct_method = bool(
             pick.predicted_method
             and self._normalize_method(pick.predicted_method) == self._normalize_method(result.method)
         )

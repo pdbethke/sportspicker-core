@@ -9,9 +9,11 @@ before registration moved into the package import.
 """
 import pytest
 
+from dataclasses import dataclass
+
 from sportspicker_core import (
-    BinaryScoringEngine, MmaScoringEngine, SportModule, SportModuleRegistry,
-    sport_registry,
+    BinaryScoringEngine, FightResult, MmaScoringEngine, SportModule,
+    SportModuleRegistry, sport_registry,
 )
 
 
@@ -26,11 +28,13 @@ class TestResolution:
     def test_a_registered_module_resolves_to_its_own_engine(self, registry):
         engine = MmaScoringEngine()
         registry.register(SportModule(
-            slug="mma", display_name="MMA", engine=engine, detail_attr="fight_result"
+            slug="mma", display_name="MMA", engine=engine,
+            detail_attr="fight_result", detail_type=FightResult,
         ))
 
         assert registry.engine_for("mma") is engine
         assert registry.get("mma").detail_attr == "fight_result"
+        assert registry.get("mma").detail_type is FightResult
 
     def test_an_unregistered_sport_falls_back_to_binary(self, registry):
         """
@@ -52,6 +56,7 @@ class TestResolution:
         assert module.slug == "kabaddi"
         assert module.engine is None
         assert module.detail_attr is None
+        assert module.detail_type is None
 
     def test_registering_twice_replaces_rather_than_duplicates(self, registry):
         first, second = MmaScoringEngine(), MmaScoringEngine()
@@ -70,6 +75,39 @@ class TestResolution:
 
     def test_unregistering_something_absent_is_not_an_error(self, registry):
         assert registry.unregister("never-registered") is None
+
+
+class TestDetailDeclaration:
+    """
+    A sport's detail is declared as a pair: where the caller finds it
+    (``detail_attr``) and the plain dataclass the engine receives
+    (``detail_type``). Half a declaration would leave the engine with nothing,
+    or the caller with nothing to build, so it is refused at registration.
+    """
+
+    def test_a_detail_attr_without_a_type_is_refused(self):
+        with pytest.raises(ValueError, match="detail_type"):
+            SportModule(slug="mma", display_name="MMA", detail_attr="fight_result")
+
+    def test_a_detail_type_without_an_attr_is_refused(self):
+        with pytest.raises(ValueError, match="detail_attr"):
+            SportModule(slug="mma", display_name="MMA", detail_type=FightResult)
+
+    def test_the_detail_type_must_be_a_dataclass(self):
+        with pytest.raises(TypeError, match="dataclass"):
+            SportModule(slug="mma", display_name="MMA",
+                        detail_attr="fight_result", detail_type=dict)
+
+    def test_a_sport_may_declare_its_own_detail(self):
+        @dataclass(frozen=True)
+        class SetScores:
+            winner_id: int | None
+            sets_won: int
+
+        module = SportModule(slug="paddleball", display_name="Paddleball",
+                             detail_attr="set_scores", detail_type=SetScores)
+
+        assert module.detail_type is SetScores
 
 
 class TestAll:
@@ -124,8 +162,9 @@ class TestShippedRegistry:
         assert isinstance(sport_registry.engine_for("mma"), MmaScoringEngine)
 
     def test_mma_declares_the_detail_relationship_scoring_needs(self):
-        """Without this the engine receives no fight result and scores zero."""
+        """Without this the engine receives no fight result and cannot score."""
         assert sport_registry.get("mma").detail_attr == "fight_result"
+        assert sport_registry.get("mma").detail_type is FightResult
 
     def test_the_binary_sports_are_registered_and_score_binary(self):
         for slug in ("football", "basketball"):

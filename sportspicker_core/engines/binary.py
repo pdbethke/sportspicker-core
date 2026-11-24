@@ -1,4 +1,5 @@
 from .base import BaseScoringEngine, ScoringResult
+from .inputs import MatchOutcome, PickInput
 
 
 class BinaryScoringEngine(BaseScoringEngine):
@@ -11,33 +12,33 @@ class BinaryScoringEngine(BaseScoringEngine):
     - Tiebreaker picks: Also scored as binary win/loss, plus a tiebreaker
       score = |predicted_home - actual_home| + |predicted_away - actual_away|.
       Lower tiebreaker is better.
+    - A match without both scores has no result yet and scores nothing.
     """
 
     engine_name = "binary"
 
-    def score_pick(self, pick, match) -> ScoringResult:
-        away_score, home_score = self.get_match_scores(match)
-        if away_score is None or home_score is None:
+    def score_pick(self, pick: PickInput, match: MatchOutcome) -> ScoringResult:
+        self.check_inputs(pick, match)
+        self.check_in_match(pick.picked_team_id, match, "the pick")
+        if not match.is_scored:
             return ScoringResult(is_correct=False, points_earned=0)
 
-        actual_winner = self.get_match_winner(match)
+        home_score, away_score = match.home.score, match.away.score
+        actual_winner = match.winner_team_id
         is_tie = actual_winner is None and away_score == home_score
 
-        # Determine picked winner
         picked_winner = self._resolve_picked_winner(pick, match)
 
-        # Check correctness
         if is_tie:
             # A tied game counts as correct for everyone
             is_correct = True
         elif picked_winner is not None and actual_winner is not None:
-            is_correct = picked_winner.id == actual_winner.id
+            is_correct = picked_winner == actual_winner
         else:
             is_correct = False
 
         points = 1 if is_correct else 0
 
-        # Calculate tiebreaker score if this is a tiebreaker pick
         tiebreaker_score = None
         if pick.predicted_home_score is not None and pick.predicted_away_score is not None:
             tiebreaker_score = (
@@ -51,22 +52,23 @@ class BinaryScoringEngine(BaseScoringEngine):
             tiebreaker_score=tiebreaker_score,
         )
 
-    def _resolve_picked_winner(self, pick, match):
+    @staticmethod
+    def _resolve_picked_winner(pick: PickInput, match: MatchOutcome) -> int | None:
         """
-        Determine the user's picked winner.
+        The team the member picked to win.
 
         Priority:
-        1. If picked_team is set directly, use it
+        1. If picked_team_id is set directly, use it
         2. If predicted scores are set, derive winner from scores
         3. Otherwise, None
         """
-        if pick.picked_team_id:
-            return pick.picked_team
+        if pick.picked_team_id is not None:
+            return pick.picked_team_id
 
         if pick.predicted_home_score is not None and pick.predicted_away_score is not None:
             if pick.predicted_home_score > pick.predicted_away_score:
-                return self.get_home_team(match)
+                return match.home.team_id
             elif pick.predicted_away_score > pick.predicted_home_score:
-                return self.get_away_team(match)
+                return match.away.team_id
 
         return None

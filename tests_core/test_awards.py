@@ -29,7 +29,7 @@ D = Decimal
 
 @dataclass(frozen=True)
 class Score:
-    """Stands in for a RoundScore without importing the ORM-adjacent module."""
+    """Stands in for a RoundScore: award_round reads only these attributes."""
 
     membership_id: int
     raw_points: float
