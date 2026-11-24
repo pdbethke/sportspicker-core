@@ -39,20 +39,20 @@ MUTANTS = [
     (
         "sportspicker_core/awards.py",
         "pot exactness: an all-zero field silently forfeits its pot",
-        "            points = even_split",
-        "            points = 0.0",
+        "            weights = {member: Fraction(1) for member in weights}\n        paid = _apportion(units, weights)",
+        "            units = 0\n            weights = {member: Fraction(1) for member in weights}\n        paid = _apportion(units, weights)",
     ),
     (
         "sportspicker_core/awards.py",
         "pot exactness: shares no longer normalise, so the pot is not respected",
-        "            points = (weight / total_weight) * pot_after_minimum",
-        "            points = weight * pot_after_minimum",
+        "    quotas = {key: units * weight / total for key, weight in weights.items()}",
+        "    quotas = {key: units * weight for key, weight in weights.items()}",
     ),
     (
         "sportspicker_core/awards.py",
         "the baseline stops bypassing budgets, so it measures nothing",
-        "        if is_baseline:\n            points = score.raw_points",
-        "        if False:\n            points = score.raw_points",
+        "    if is_baseline:\n        paid = {",
+        "    if False:\n        paid = {",
     ),
     (
         "sportspicker_core/awards.py",
@@ -75,26 +75,65 @@ MUTANTS = [
     (
         "sportspicker_core/awards.py",
         "min_participants void and scale swapped",
-        '    return 0.0 if mode == "void" else pot * (scoring / minimum)',
-        '    return pot * (scoring / minimum) if mode == "void" else 0.0',
+        '    if mode == "void":\n        return _from_units(0)',
+        '    if mode != "void":\n        return _from_units(0)',
     ),
     (
         "sportspicker_core/awards.py",
-        "an empty contest divides by zero instead of awarding nothing",
-        "    if round_count <= 0:\n        return 0.0",
-        "    if round_count < 0:\n        return 0.0",
+        # This used to remove the zero-rounds guard. Apportioning over no
+        # rounds already yields nothing, so that mutant became equivalent; the
+        # boundary that can still go wrong is a negative count passing quietly.
+        "a negative round count pays nothing instead of being refused",
+        "    if round_count < 0:\n        raise ValueError",
+        "    if False:\n        raise ValueError",
     ),
     (
         "sportspicker_core/awards.py",
         "pot exactness: a single-round contest pays nothing at all",
-        "    if round_count <= 0:\n        return 0.0",
-        "    if round_count <= 1:\n        return 0.0",
+        "    if round_count == 0:\n        return ()",
+        "    if round_count <= 1:\n        return ()",
     ),
     (
         "sportspicker_core/awards.py",
         "a field exactly on min_participants is treated as short of it",
         "    if scoring >= minimum:",
         "    if scoring > minimum:",
+    ),
+    (
+        "sportspicker_core/awards.py",
+        "pot exactness: the leftover ten-thousandths are dropped, so a round pays short",
+        "    for key in by_remainder[:leftover]:",
+        "    for key in by_remainder[:0]:",
+    ),
+    (
+        "sportspicker_core/awards.py",
+        "leftover units go to the lowest id rather than the largest remainder",
+        "    by_remainder = sorted(quotas, key=lambda key: (-(quotas[key] - shares[key]), key))",
+        "    by_remainder = sorted(quotas)",
+    ),
+    (
+        "sportspicker_core/awards.py",
+        "a weight for someone outside the field is accepted, so the pot pays short",
+        "    if strangers:",
+        "    if False:",
+    ),
+    (
+        "sportspicker_core/awards.py",
+        "a negative weight is accepted and takes from everyone else's share",
+        "    if value < 0:",
+        "    if False:",
+    ),
+    (
+        "sportspicker_core/awards.py",
+        "a float amount is converted instead of refused",
+        "    if isinstance(value, bool) or not isinstance(value, (int, str, Decimal)):",
+        "    if isinstance(value, bool) or not isinstance(value, (int, float, str, Decimal)):",
+    ),
+    (
+        "sportspicker_core/strategies/builtin.py",
+        "a negative tail_value is accepted, handing members beyond the table negative weight",
+        "            or not math.isfinite(tail) or tail < 0):",
+        "            or not math.isfinite(tail)):",
     ),
     (
         "sportspicker_core/strategies/builtin.py",
@@ -141,20 +180,20 @@ MUTANTS = [
     (
         "sportspicker_core/budgets.py",
         "a contest with no explicit budget becomes worth nothing",
-        "DEFAULT_CONTEST_BUDGET = 1000.0",
-        "DEFAULT_CONTEST_BUDGET = 0.0",
+        'DEFAULT_CONTEST_BUDGET = Decimal("1000.0000")',
+        'DEFAULT_CONTEST_BUDGET = Decimal("0.0000")',
     ),
     (
         "sportspicker_core/budgets.py",
         "two entries for one contest are summed rather than corrected",
         "        resolved[entry.contest_id] = (",
-        "        resolved[entry.contest_id] = resolved.get(entry.contest_id, 0.0) + (",
+        "        resolved[entry.contest_id] = resolved.get(entry.contest_id, 0) + (",
     ),
     (
         "sportspicker_core/budgets.py",
         "an explicit default is ignored in favour of the module constant",
-        "float(entry.budget) if entry.budget is not None else float(default)",
-        "float(entry.budget) if entry.budget is not None else float(DEFAULT_CONTEST_BUDGET)",
+        "            if entry.budget is not None else fallback",
+        "            if entry.budget is not None else DEFAULT_CONTEST_BUDGET",
     ),
     (
         "sportspicker_core/registry.py",

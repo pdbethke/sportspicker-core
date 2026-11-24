@@ -1,5 +1,22 @@
+import math
+
 from .base import NormalizationStrategy, RoundScore
 from .registry import normalization_registry
+
+
+def _tail_value(params: dict) -> float:
+    """
+    What a place beyond the points table is worth: ``tail_value``, or nothing.
+
+    It must be a finite, non-negative number. A negative tail used to be
+    accepted and handed every member beyond the table negative weight, which
+    quietly inflated everyone else's share of the pot.
+    """
+    tail = params.get("tail_value", 0)
+    if (isinstance(tail, bool) or not isinstance(tail, (int, float))
+            or not math.isfinite(tail) or tail < 0):
+        raise ValueError(f"tail_value must be a non-negative number, not {tail!r}")
+    return float(tail)
 
 
 class RankStrategy(NormalizationStrategy):
@@ -19,10 +36,11 @@ class RankStrategy(NormalizationStrategy):
             raise ValueError("points_table must be a non-empty list")
         if any(not isinstance(v, (int, float)) or v < 0 for v in table):
             raise ValueError("points_table values must be non-negative numbers")
+        _tail_value(params)
 
     def weigh_round(self, scores: list[RoundScore], params: dict) -> dict[int, float]:
         table = params["points_table"]
-        tail = float(params.get("tail_value", 0))
+        tail = _tail_value(params)
 
         def value_at(position: int) -> float:
             return float(table[position]) if position < len(table) else tail

@@ -13,7 +13,10 @@ table, and graded without standing anything up.
 Scoring and nothing else: no database, no HTTP, no clock. None of that is
 arithmetic, and each would cost the property above.
 """
-from .awards import Award, award_round, competition_ranks, effective_pot, pot_for
+from .awards import (
+    Award, award_round, competition_ranks, effective_pot, pot_for, round_pots,
+    to_amount,
+)
 from .budgets import DEFAULT_CONTEST_BUDGET, resolve_budgets
 from .engines import (
     BaseScoringEngine, BinaryScoringEngine, MmaScoringEngine, ScoringResult,
@@ -32,6 +35,7 @@ from . import modules  # noqa: E402,F401
 
 __all__ = [
     "Award", "award_round", "competition_ranks", "effective_pot", "pot_for",
+    "round_pots", "to_amount",
     "DEFAULT_CONTEST_BUDGET", "resolve_budgets",
     "BaseScoringEngine", "BinaryScoringEngine", "MmaScoringEngine", "ScoringResult",
     "SportModule", "SportModuleRegistry", "sport_registry",
