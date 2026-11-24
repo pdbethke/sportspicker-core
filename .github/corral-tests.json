@@ -8,6 +8,7 @@
 
   "sportspicker_core/engines/base.py": "tests_core/test_scoring_engines.py",
   "sportspicker_core/engines/binary.py": "tests_core/test_scoring_engines.py",
+  "sportspicker_core/engines/inputs.py": "tests_core/test_scoring_engines.py",
   "sportspicker_core/engines/mma.py": "tests_core/test_mma_engine.py",
 
   "sportspicker_core/strategies/base.py": "tests_core/test_strategies.py",

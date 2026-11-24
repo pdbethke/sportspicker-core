@@ -2,6 +2,8 @@ import abc
 from dataclasses import dataclass
 from typing import Optional
 
+from .inputs import MatchOutcome, PickInput
+
 
 @dataclass
 class ScoringResult:
@@ -20,68 +22,43 @@ class BaseScoringEngine(abc.ABC):
     """
     Abstract base class for scoring engines.
 
-    Sport modules register concrete implementations at AppConfig.ready() time.
-    The core system provides BinaryScoringEngine for winner picks.
+    An engine turns one ``PickInput`` and one ``MatchOutcome`` into a
+    ``ScoringResult``. Both are plain frozen dataclasses (see ``inputs``); an
+    engine reads nothing else, and in particular never a storage object.
+    Sport modules register engines with the sport registry, and the library
+    ships ``BinaryScoringEngine`` for winner picks.
+
+    A malformed input — the wrong type, a pick or a result naming a team that
+    was not in the match, a missing sport detail — raises. Scoring it as zero
+    would look like a member who picked wrong and hide the bug that produced
+    it.
     """
 
     engine_name: str = "base"
 
     @abc.abstractmethod
-    def score_pick(self, pick, match) -> ScoringResult:
+    def score_pick(self, pick: PickInput, match: MatchOutcome) -> ScoringResult:
         """
         Score a single pick against a completed match.
 
-        Args:
-            pick: A contests.Pick instance
-            match: A sports.Match instance (must have MatchTeam entries with scores)
-
-        Returns:
-            ScoringResult with correctness, points, and optional tiebreaker score
+        Returns a ScoringResult with correctness, points, and an optional
+        tiebreaker score (lower is closer).
         """
         ...
 
-    def get_match_winner(self, match) -> Optional[object]:
-        """
-        Determine the winner of a match from MatchTeam entries.
+    @staticmethod
+    def check_inputs(pick, match) -> None:
+        """Refuse anything that is not the input contract's own types."""
+        if not isinstance(pick, PickInput):
+            raise TypeError(f"pick must be a PickInput, not {type(pick).__name__}")
+        if not isinstance(match, MatchOutcome):
+            raise TypeError(f"match must be a MatchOutcome, not {type(match).__name__}")
 
-        Returns the winning Team, or None for a draw/tie.
-        Convention: MatchTeam.order=0 is away, order=1 is home.
-        """
-        match_teams = list(match.matchteam_set.all().order_by("order"))
-        if len(match_teams) != 2:
-            return None
-
-        away, home = match_teams[0], match_teams[1]
-
-        if home.score is not None and away.score is not None:
-            if home.score > away.score:
-                return home.team
-            elif away.score > home.score:
-                return away.team
-        return None
-
-    def get_match_scores(self, match) -> tuple:
-        """
-        Return (away_score, home_score) tuple from MatchTeam entries.
-
-        Convention: order=0 is away, order=1 is home.
-        """
-        match_teams = list(match.matchteam_set.all().order_by("order"))
-        if len(match_teams) != 2:
-            return (None, None)
-
-        return (match_teams[0].score, match_teams[1].score)
-
-    def get_home_team(self, match) -> Optional[object]:
-        """Return the home team (order=1) for this match."""
-        try:
-            return match.matchteam_set.get(order=1).team
-        except Exception:
-            return None
-
-    def get_away_team(self, match) -> Optional[object]:
-        """Return the away team (order=0) for this match."""
-        try:
-            return match.matchteam_set.get(order=0).team
-        except Exception:
-            return None
+    @staticmethod
+    def check_in_match(team_id, match: MatchOutcome, what: str) -> None:
+        """A team a pick or result names must be one of the match's two sides."""
+        if team_id is not None and team_id not in match.team_ids:
+            raise ValueError(
+                f"{what} names team {team_id}, which is not in this match "
+                f"(teams {match.team_ids})"
+            )

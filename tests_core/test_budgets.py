@@ -6,6 +6,9 @@ each get the same default, so adding a contest never devalues the ones already
 in the group. Splitting a fixed total between them would do exactly that.
 """
 from dataclasses import dataclass
+from decimal import Decimal
+
+import pytest
 
 from sportspicker_core import (
     DEFAULT_CONTEST_BUDGET, resolve_budgets,
@@ -15,11 +18,11 @@ from sportspicker_core import (
 @dataclass(frozen=True)
 class Entry:
     contest_id: int
-    budget: float | None
+    budget: Decimal | int | str | None
 
 
 def test_an_explicit_budget_is_used_as_given():
-    assert resolve_budgets([Entry(1, 250.0)]) == {1: 250.0}
+    assert resolve_budgets([Entry(1, Decimal("250"))]) == {1: Decimal("250")}
 
 
 def test_a_missing_budget_falls_back_to_the_default():
@@ -59,7 +62,7 @@ def test_an_explicit_default_overrides_the_module_one():
 
     Added after an audit ignored the argument and watched the suite agree.
     """
-    custom = DEFAULT_CONTEST_BUDGET + 500.0
+    custom = DEFAULT_CONTEST_BUDGET + 500
 
     resolved = resolve_budgets([Entry(1, None)], default=custom)
 
@@ -73,9 +76,9 @@ def test_a_repeated_contest_takes_its_last_budget_rather_than_their_sum():
     together would invent a budget nobody set and quietly break the guarantee
     the group rests on.
     """
-    resolved = resolve_budgets([Entry(1, 100.0), Entry(1, 250.0)])
+    resolved = resolve_budgets([Entry(1, 100), Entry(1, 250)])
 
-    assert resolved == {1: 250.0}
+    assert resolved == {1: Decimal(250)}
 
 
 def test_implicit_contests_are_worth_the_same_as_each_other():
@@ -95,15 +98,48 @@ def test_adding_a_contest_does_not_devalue_the_existing_ones():
 
 
 def test_explicit_and_implicit_budgets_coexist():
-    resolved = resolve_budgets([Entry(1, 500.0), Entry(2, None)])
+    resolved = resolve_budgets([Entry(1, "500"), Entry(2, None)])
 
-    assert resolved == {1: 500.0, 2: DEFAULT_CONTEST_BUDGET}
+    assert resolved == {1: Decimal(500), 2: DEFAULT_CONTEST_BUDGET}
 
 
 def test_a_zero_budget_is_honoured_rather_than_treated_as_missing():
     """Zero is a deliberate choice — a contest that counts for nothing."""
-    assert resolve_budgets([Entry(1, 0.0)]) == {1: 0.0}
+    assert resolve_budgets([Entry(1, 0)]) == {1: Decimal(0)}
 
 
 def test_an_empty_group_resolves_to_nothing():
     assert resolve_budgets([]) == {}
+
+
+def test_budgets_are_exact_decimals_in_ten_thousandths():
+    """The unit the awards are allocated in, so a budget divides without drift."""
+    resolved = resolve_budgets([Entry(1, "1234.5"), Entry(2, None)])
+
+    assert all(isinstance(v, Decimal) for v in resolved.values())
+    assert resolved[1] == Decimal("1234.5000")
+    assert resolved[1].as_tuple().exponent == -4
+
+
+def test_the_default_budget_is_an_exact_amount():
+    assert isinstance(DEFAULT_CONTEST_BUDGET, Decimal)
+
+
+def test_a_float_budget_is_refused_rather_than_guessed_at():
+    """
+    A float budget has already lost the value somebody set; refusing it names
+    the problem where it starts, instead of a ten-thousandth going missing in
+    a championship later.
+    """
+    with pytest.raises(TypeError, match="budget"):
+        resolve_budgets([Entry(1, 250.0)])
+
+
+def test_a_float_default_is_refused_too():
+    with pytest.raises(TypeError):
+        resolve_budgets([Entry(1, None)], default=1000.0)
+
+
+def test_a_negative_budget_is_refused():
+    with pytest.raises(ValueError, match="negative"):
+        resolve_budgets([Entry(1, -5)])

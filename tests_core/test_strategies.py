@@ -81,3 +81,30 @@ def test_drop_worst_n_zero_is_still_accepted():
     strategy = normalization_registry.get("share")
 
     strategy.validate_config({"drop_worst_n": 0})
+
+
+@pytest.mark.parametrize("tail", [-1, -0.5, "0", None, True, float("nan")])
+def test_rank_rejects_a_tail_value_that_is_not_a_non_negative_number(tail):
+    """
+    A negative tail used to be accepted and handed every member beyond the
+    table negative points, quietly inflating everyone else's share.
+    """
+    strategy = normalization_registry.get("rank")
+
+    with pytest.raises(ValueError, match="tail_value"):
+        strategy.validate_config({"points_table": [25, 18], "tail_value": tail})
+
+
+def test_rank_accepts_a_non_negative_tail_value():
+    strategy = normalization_registry.get("rank")
+
+    strategy.validate_config({"points_table": [25, 18], "tail_value": 2.5})
+
+
+def test_rank_refuses_to_weigh_with_a_negative_tail_value():
+    """Weighing is reachable without validation, so it checks again."""
+    strategy = normalization_registry.get("rank")
+
+    with pytest.raises(ValueError, match="tail_value"):
+        strategy.weigh_round(scores((1, 9), (2, 7), (3, 1)),
+                             {"points_table": [25, 18], "tail_value": -3})

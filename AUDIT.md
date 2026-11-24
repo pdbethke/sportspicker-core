@@ -27,7 +27,7 @@ Ranked by how much they would hurt if silently wrong.
 
 | target | what it decides |
 |---|---|
-| `sportspicker_core/awards.py` | the pot, the shares, the ranks — a contest must contribute exactly its budget |
+| `sportspicker_core/awards.py` | the pot, the shares, the ranks — a contest must contribute exactly its budget, to the ten-thousandth |
 | `sportspicker_core/strategies/builtin.py` | how each rule weighs a round, including tie splitting across the points table |
 | `sportspicker_core/engines/binary.py` | correct/incorrect and the tiebreaker distance for every non-MMA sport |
 | `sportspicker_core/engines/mma.py` | winner + method + round scoring, draw and no-contest handling |
@@ -45,8 +45,8 @@ Before spending an audit, run the free dry pass:
 
     python scripts/mutation_dryrun.py
 
-It plants twenty-four goal-violating mutants and reports the kill rate (currently
-24/24) — two of which an adversarial audit found first, after this suite let
+It plants thirty-three goal-violating mutants and reports the kill rate (currently
+33/33) — two of which an adversarial audit found first, after this suite let
 them through (`demo/thin-boundaries` preserves that state). It is not an independent audit — those are the failures the
 test author imagined — but it answers "would we pass?" for nothing, and its
 first run found a real gap.
@@ -68,7 +68,9 @@ Notes worth knowing before the first run:
 The properties worth attacking are written down rather than implied:
 
 - **Pot exactness** — a contest contributes exactly its budget under any
-  strategy and any field, including one where nobody scored.
+  strategy and any field, including one where nobody scored. Exactly means to
+  the ten-thousandth, compared with `==`: amounts are `Decimal`, and leftover
+  units are apportioned by largest remainder.
   `tests_core/test_awards.py::TestPotExactness`
 - **Baseline bypass** — the `raw` strategy deliberately ignores budgets; that
   unnormalised behaviour is what it exists to measure and must not be
