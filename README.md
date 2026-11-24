@@ -6,7 +6,7 @@ Scoring and aggregation for sports pick'em contests. Members predict match
 results; this library decides who was right and what each round of each contest
 is worth.
 
-About 699 lines, no dependencies, no database, no HTTP, no clock.
+About 1,000 lines, no dependencies, no database, no HTTP, no clock.
 
 ## What this repository is for
 
@@ -36,15 +36,22 @@ than believed. A command line over this arithmetic lives in
 [sportspicker-cli][cli], which depends on this package and nothing else.
 
 ```python
-from sportspicker_core import award_round, normalization_registry, pot_for
+from sportspicker_core import award_round, normalization_registry, round_pots
 
-pot = pot_for(budget=1000, round_count=4)        # 250.0 for this round
+pots = round_pots(budget="1000", round_count=3)  # 333.3334, 333.3333, 333.3333
 scores = [...]                                    # what each member scored
 rule = normalization_registry.get("rank")
-awards = award_round(scores, rule.weigh_round(scores, params), pot, params)
+awards = award_round(scores, rule.weigh_round(scores, params), pots[0], params,
+                     is_baseline=rule.is_baseline)
 
-sum(a.points_awarded for a in awards)            # == 250.0, always
+sum(a.points_awarded for a in awards)            # == Decimal("333.3334"), exactly
 ```
+
+Amounts are `Decimal`s in ten-thousandths of a point. Where a division does not
+come out even, the leftover ten-thousandths are handed out by largest remainder
+with a fixed tie-break, so the parts always add back up to the whole — exactly,
+not within a tolerance. A float budget or pot is refused rather than guessed at;
+pass an int, a str or a `Decimal`.
 
 ## The guarantee
 
@@ -60,6 +67,10 @@ Everything else serves it. A rule emits *relative weights*; the library
 normalizes them into shares of the round's pot. A rule can pay 25 points or
 25,000 and the championship is unmoved.
 
+"Exactly" is literal. Awards are allocated in whole ten-thousandths, so a
+round's awards sum to its pot and a contest's round pots sum to its budget to
+the last place, and the tests compare with `==`.
+
 ## What's here
 
 | module | what it decides |
@@ -67,7 +78,7 @@ normalizes them into shares of the round's pot. A rule can pay 25 points or
 | `awards.py` | the pot, the shares, the ranks |
 | `budgets.py` | what each contest contributes |
 | `strategies/` | how each rule weighs a round |
-| `engines/` | who was right — binary sports and MMA |
+| `engines/` | who was right — binary sports and MMA, from plain `PickInput` / `MatchOutcome` dataclasses |
 | `registry.py` | which engine a sport resolves to |
 
 Four scoring rules ship: `rank` (championship points by finishing position),
@@ -77,7 +88,7 @@ unnormalized baseline used for measurement, never for a live contest.
 ## Tests
 
 ```
-python -m pytest tests_core -q      # 90 tests, well under a second
+python -m pytest tests_core -q      # 156 tests, well under a second
 ```
 
 CI runs that suite on every push, and then runs `scripts/mutation_dryrun.py` and
@@ -97,13 +108,13 @@ It is the audit subject for [corral](https://corralai.dev), a multi-agent code
 audit tool. `AUDIT.md` and `docs/audit-demo.md` describe what to attack and why
 the guarantee is hard to violate accidentally.
 
-`scripts/mutation_dryrun.py` plants twenty-four goal-violating changes and reports
-how many the tests kill. It currently kills all twenty-four — but that is a floor,
+`scripts/mutation_dryrun.py` plants thirty-three goal-violating changes and reports
+how many the tests kill. It currently kills all thirty-three — but that is a floor,
 not a claim, and the library has the receipts to prove it. An adversarial audit
 planted twenty faults of its own and **two got through**: a single-round contest
 paying nothing, and a field landing exactly on `min_participants` being treated
-as short of it. Both are now tested, and both were added to the dry-run — which
-is why it says twenty-four rather than sixteen. Those were the failures nobody
+as short of it. Both are now tested, and both were added to the dry-run, which
+had sixteen mutants before them and has grown since with each new guarantee. Those were the failures nobody
 here imagined, which is the entire argument for having something adversarial
 plant them.
 
@@ -122,6 +133,33 @@ there explains all three, including a test that sits exactly on the boundary it
 appears to cover and returns the right answer either way.
 
 None of them should be merged.
+
+## Changes
+
+**0.2.0** — breaking.
+
+- Awards and pots are exact `Decimal`s in ten-thousandths, apportioned by
+  largest remainder (ties to the lowest membership id; leftover budget units
+  to the earliest rounds). `Award.points_awarded`, `effective_pot`,
+  `resolve_budgets` and `DEFAULT_CONTEST_BUDGET` are `Decimal` (were `float`).
+- `round_pots(budget, round_count)` is new; `pot_for` now takes the round's
+  index, `pot_for(budget, round_count, round_index)`, because the leftover
+  units make a round's pot depend on its position. A negative round count is
+  refused.
+- `to_amount(value, what)` is new: amounts are an int, str or `Decimal`; a
+  float, a negative or a value finer than a ten-thousandth is refused.
+- `award_round(..., *, is_baseline)` is keyword-only with no default, and it
+  refuses weights for members outside the field, negative or non-finite
+  weights, and repeated members. The rank strategy refuses a negative
+  `tail_value`.
+- Engines take `score_pick(PickInput, MatchOutcome)`: frozen dataclasses
+  (`Side`, `MatchOutcome`, `PickInput`, and MMA's `FightResult`) in place of
+  objects shaped like a Django model. The `get_match_winner`,
+  `get_match_scores`, `get_home_team` and `get_away_team` helpers are gone;
+  `MatchOutcome` answers those itself. A malformed input raises instead of
+  scoring zero.
+- `SportModule` gains `detail_type`, the dataclass a sport's detail is passed
+  as; it must be declared together with `detail_attr`.
 
 ## License
 

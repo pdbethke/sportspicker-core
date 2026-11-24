@@ -2,7 +2,7 @@
 
 `sportspicker_core` is the scoring domain of a sports pick'em platform. Members
 predict match results; the library decides who was right and what each round of
-each contest is worth. About 700 lines, no database, no HTTP, no clock.
+each contest is worth. About 1,000 lines, no database, no HTTP, no clock.
 
 It makes a good audit subject for a reason that has nothing to do with its
 size: **you already understand the domain.** Everyone has an intuition for a
@@ -21,7 +21,9 @@ with more fixtures, no less from a sport with fewer.
 
 Everything else in the library serves it. A rule emits *relative weights*; the
 library normalises them into shares of the round's pot. A rule can pay 25 points
-or 25,000 and the championship is unmoved.
+or 25,000 and the championship is unmoved. And "exactly" is literal: amounts are
+decimals in ten-thousandths of a point, apportioned so the parts add back up to
+the whole, and the tests compare with `==` rather than within a tolerance.
 
 ## Why a violation is hard to spot
 
@@ -58,7 +60,7 @@ corral certify --local --repo-dir . \
   -- python -m pytest tests_core -q
 ```
 
-The core suite is 90 tests and runs in under half a second on a bare system
+The core suite is 156 tests and runs in about half a second on a bare system
 Python with only `pytest` installed — no virtualenv, no services, no network.
 That matters in an offline jail, which binds `/usr` but not the home directory,
 so a venv is invisible inside it.
@@ -69,12 +71,12 @@ fresh interpreter and by reading the import statements.
 
 ## What to expect
 
-A hand-run dry pass — twenty-four goal-violating mutants, the suite run against
-each — currently kills all twenty-four:
+A hand-run dry pass — thirty-three goal-violating mutants, the suite run against
+each — currently kills all thirty-three:
 
 ```
 python scripts/mutation_dryrun.py
-kill rate: 24/24 = 1.00
+kill rate: 33/33 = 1.00
 ```
 
 Treat that as a floor, not a prediction — and here the floor has already been
@@ -82,7 +84,7 @@ tested. A real audit of this file planted twenty faults and **two survived**:
 a single-round contest paying nothing, and a field landing exactly on
 `min_participants` read as short of it. Neither was on the hand-written list,
 because they were failures *the test author had not imagined*. Both are covered
-now, which is why the count above is twenty-four. That is the entire reason to run
+now, and both joined the dry pass. That is the entire reason to run
 something adversarial rather than grade your own homework. The dry pass earns its keep differently — its first
 run surfaced a real gap: the sport-module fallback had no test here at all, so
 nothing in this suite would have noticed it breaking.
