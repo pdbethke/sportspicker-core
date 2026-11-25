@@ -197,21 +197,21 @@ MUTANTS = [
     ),
     (
         "sportspicker_core/budgets.py",
-        "a contest with no explicit budget becomes worth nothing",
-        "            if entry.budget is not None else fallback",
-        "            if entry.budget is not None else Decimal(0)",
+        "a contest with no budget is quietly worth nothing instead of refused",
+        "        if entry.budget is None:\n            raise ValueError(",
+        "        if entry.budget is None:\n            resolved[entry.contest_id] = Decimal(0)\n            continue\n            raise ValueError(",
+    ),
+    (
+        "sportspicker_core/budgets.py",
+        "a contest with no budget quietly takes a constant instead of being refused",
+        "        if entry.budget is None:\n            raise ValueError(",
+        "        if entry.budget is None:\n            resolved[entry.contest_id] = Decimal(1000)\n            continue\n            raise ValueError(",
     ),
     (
         "sportspicker_core/budgets.py",
         "two entries for one contest are summed rather than corrected",
-        "        resolved[entry.contest_id] = (",
-        "        resolved[entry.contest_id] = resolved.get(entry.contest_id, 0) + (",
-    ),
-    (
-        "sportspicker_core/budgets.py",
-        "the caller's unset budget is ignored in favour of a constant",
-        "            if entry.budget is not None else fallback",
-        "            if entry.budget is not None else Decimal(1000)",
+        "        resolved[entry.contest_id] = to_amount(",
+        "        resolved[entry.contest_id] = resolved.get(entry.contest_id, 0) + to_amount(",
     ),
     (
         "sportspicker_core/registry.py",
