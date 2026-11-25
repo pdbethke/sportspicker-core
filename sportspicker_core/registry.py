@@ -5,6 +5,11 @@ A module is a declaration of everything core needs to know about a sport:
 which engine scores it, and whether its results carry a sport-specific detail.
 Core reads these fields instead of naming sports.
 
+Every sport names its engine, a winner-pick sport included
+(``BinaryScoringEngine()``), and a sport nobody registered is refused with
+``UnknownSportError``. There is no fallback engine: scoring an unknown sport
+as binary produced plausible tables for sports that score differently.
+
 A detail is declared as a pair. ``detail_attr`` names where the caller keeps
 it (for the application, a relationship on its match row), and ``detail_type``
 is the frozen dataclass the engine receives as ``MatchOutcome.detail``. The
@@ -13,24 +18,36 @@ engine never sees the caller's own object.
 """
 import dataclasses
 import logging
-from collections.abc import Callable
 from dataclasses import dataclass
 
-from .engines import BaseScoringEngine, BinaryScoringEngine
+from .engines import BaseScoringEngine
 
 logger = logging.getLogger(__name__)
 
 
+class UnknownSportError(LookupError):
+    """No module is registered for the sport asked about."""
+
+
 @dataclass(frozen=True)
 class SportModule:
+    """
+    ``detail_attr`` and ``detail_type`` are left out by a sport whose results
+    carry no detail; that is a fact about the sport, not a value chosen for it.
+    """
+
     slug: str
     display_name: str
-    engine: BaseScoringEngine | None = None
+    engine: BaseScoringEngine
     detail_attr: str | None = None
     detail_type: type | None = None
-    importer: Callable | None = None
 
     def __post_init__(self):
+        if not isinstance(self.engine, BaseScoringEngine):
+            raise TypeError(
+                f"sport '{self.slug}': engine must be a scoring engine, not "
+                f"{self.engine!r}; a winner-pick sport passes BinaryScoringEngine()"
+            )
         if self.detail_attr is not None and self.detail_type is None:
             raise ValueError(
                 f"sport '{self.slug}' declares detail_attr={self.detail_attr!r} "
@@ -54,11 +71,18 @@ class SportModuleRegistry:
 
     def __init__(self):
         self._modules: dict[str, SportModule] = {}
-        self._default_engine = BinaryScoringEngine()
 
-    def register(self, module: SportModule) -> None:
-        if module.slug in self._modules:
-            logger.warning("Overwriting sport module '%s'", module.slug)
+    def register(self, module: SportModule, *, replace: bool = False) -> None:
+        """
+        Add a sport. A slug already registered is refused unless ``replace``
+        is passed: two modules for one sport is a wiring mistake, and the one
+        registered last would quietly score it.
+        """
+        if module.slug in self._modules and not replace:
+            raise ValueError(
+                f"sport '{module.slug}' is already registered; pass replace=True "
+                f"to swap its module, or unregister it first"
+            )
         self._modules[module.slug] = module
         logger.info("Registered sport module '%s'", module.slug)
 
@@ -72,11 +96,18 @@ class SportModuleRegistry:
         return self._modules.pop(slug, None)
 
     def get(self, slug: str) -> SportModule:
-        """Unknown sports get a plain module: binary scoring, no detail."""
-        return self._modules.get(slug) or SportModule(slug=slug, display_name=slug)
+        """The module registered for ``slug``; UnknownSportError if there is none."""
+        try:
+            return self._modules[slug]
+        except KeyError:
+            known = ", ".join(sorted(self._modules)) or "none"
+            raise UnknownSportError(
+                f"no sport module is registered for '{slug}' (registered: {known}); "
+                f"register one with sport_registry.register(SportModule(...))"
+            ) from None
 
     def engine_for(self, slug: str) -> BaseScoringEngine:
-        return self.get(slug).engine or self._default_engine
+        return self.get(slug).engine
 
     def all(self) -> list[SportModule]:
         return list(self._modules.values())

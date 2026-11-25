@@ -79,7 +79,7 @@ the last place, and the tests compare with `==`.
 | `budgets.py` | what each contest contributes |
 | `strategies/` | how each rule weighs a round |
 | `engines/` | who was right — binary sports and MMA, from plain `PickInput` / `MatchOutcome` dataclasses |
-| `registry.py` | which engine a sport resolves to |
+| `registry.py` | which engine a sport resolves to; an unregistered sport is refused |
 
 Four scoring rules ship: `rank` (championship points by finishing position),
 `share` (proportional to raw score), `equal`, and `raw` — a deliberately
@@ -88,7 +88,7 @@ unnormalized baseline used for measurement, never for a live contest.
 ## Tests
 
 ```
-python -m pytest tests_core -q      # 156 tests, well under a second
+python -m pytest tests_core -q      # 178 tests, well under a second
 ```
 
 CI runs that suite on every push, and then runs `scripts/mutation_dryrun.py` and
@@ -108,8 +108,8 @@ It is the audit subject for [corral](https://corralai.dev), a multi-agent code
 audit tool. `AUDIT.md` and `docs/audit-demo.md` describe what to attack and why
 the guarantee is hard to violate accidentally.
 
-`scripts/mutation_dryrun.py` plants thirty-three goal-violating changes and reports
-how many the tests kill. It currently kills all thirty-three — but that is a floor,
+`scripts/mutation_dryrun.py` plants thirty-six goal-violating changes and reports
+how many the tests kill. It currently kills all thirty-six — but that is a floor,
 not a claim, and the library has the receipts to prove it. An adversarial audit
 planted twenty faults of its own and **two got through**: a single-round contest
 paying nothing, and a field landing exactly on `min_participants` being treated
@@ -134,32 +134,19 @@ appears to cover and returns the right answer either way.
 
 None of them should be merged.
 
-## Changes
+## Versions
 
-**0.2.0** — breaking.
+Breaking changes and what to do about them are listed in
+[CHANGELOG.md](CHANGELOG.md). 0.3.0 removes every value the library used to
+choose for its callers: an unregistered sport is refused rather than scored as
+binary, and a contest budget for contests without one, a `min_participants_mode`
+and a rank `tail_value` must be given.
 
-- Awards and pots are exact `Decimal`s in ten-thousandths, apportioned by
-  largest remainder (ties to the lowest membership id; leftover budget units
-  to the earliest rounds). `Award.points_awarded`, `effective_pot`,
-  `resolve_budgets` and `DEFAULT_CONTEST_BUDGET` are `Decimal` (were `float`).
-- `round_pots(budget, round_count)` is new; `pot_for` now takes the round's
-  index, `pot_for(budget, round_count, round_index)`, because the leftover
-  units make a round's pot depend on its position. A negative round count is
-  refused.
-- `to_amount(value, what)` is new: amounts are an int, str or `Decimal`; a
-  float, a negative or a value finer than a ten-thousandth is refused.
-- `award_round(..., *, is_baseline)` is keyword-only with no default, and it
-  refuses weights for members outside the field, negative or non-finite
-  weights, and repeated members. The rank strategy refuses a negative
-  `tail_value`.
-- Engines take `score_pick(PickInput, MatchOutcome)`: frozen dataclasses
-  (`Side`, `MatchOutcome`, `PickInput`, and MMA's `FightResult`) in place of
-  objects shaped like a Django model. The `get_match_winner`,
-  `get_match_scores`, `get_home_team` and `get_away_team` helpers are gone;
-  `MatchOutcome` answers those itself. A malformed input raises instead of
-  scoring zero.
-- `SportModule` gains `detail_type`, the dataclass a sport's detail is passed
-  as; it must be declared together with `detail_attr`.
+The package is not on PyPI. Depend on a release tag's archive:
+
+```
+sportspicker-core @ https://github.com/pdbethke/sportspicker-core/archive/refs/tags/v0.3.0.tar.gz
+```
 
 ## License
 

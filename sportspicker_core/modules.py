@@ -1,5 +1,5 @@
 """Built-in sport modules. Import for side effects at app startup."""
-from .engines import FightResult, MmaScoringEngine
+from .engines import BinaryScoringEngine, FightResult, MmaScoringEngine
 from .registry import SportModule, sport_registry
 
 sport_registry.register(SportModule(
@@ -10,5 +10,9 @@ sport_registry.register(SportModule(
     detail_type=FightResult,
 ))
 
-sport_registry.register(SportModule(slug="football", display_name="Football"))
-sport_registry.register(SportModule(slug="basketball", display_name="Basketball"))
+sport_registry.register(SportModule(
+    slug="football", display_name="Football", engine=BinaryScoringEngine(),
+))
+sport_registry.register(SportModule(
+    slug="basketball", display_name="Basketball", engine=BinaryScoringEngine(),
+))

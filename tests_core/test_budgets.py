@@ -1,18 +1,21 @@
 """
 Contest budgets.
 
-The rule is a decision, not a mechanism: contests without an explicit budget
-each get the same default, so adding a contest never devalues the ones already
-in the group. Splitting a fixed total between them would do exactly that.
+Every contest in a group carries its own budget, and the library uses it as
+given. There is no amount for "no budget": a library that filled one in would
+be choosing a value on its callers' behalf, and so would an application that
+kept a constant for it. A missing budget is refused, naming the contest.
+
+What makes groups fair is unchanged: budgets are amounts, not shares of a
+fixed total, so adding a contest never devalues the ones already there.
 """
 from dataclasses import dataclass
 from decimal import Decimal
 
 import pytest
 
-from sportspicker_core import (
-    DEFAULT_CONTEST_BUDGET, resolve_budgets,
-)
+import sportspicker_core
+from sportspicker_core import resolve_budgets
 
 
 @dataclass(frozen=True)
@@ -21,52 +24,19 @@ class Entry:
     budget: Decimal | int | str | None
 
 
+def test_a_contest_without_a_budget_is_refused_by_name():
+    with pytest.raises(ValueError, match="contest 7 has no budget"):
+        resolve_budgets([Entry(1, 100), Entry(7, None)])
+
+
+def test_there_is_no_amount_for_a_missing_budget_to_fall_back_to():
+    assert not hasattr(sportspicker_core, "DEFAULT_CONTEST_BUDGET")
+    with pytest.raises(TypeError):
+        resolve_budgets([Entry(1, 100)], unset_budget=Decimal("1000"))
+
+
 def test_an_explicit_budget_is_used_as_given():
     assert resolve_budgets([Entry(1, Decimal("250"))]) == {1: Decimal("250")}
-
-
-def test_a_missing_budget_falls_back_to_the_default():
-    assert resolve_budgets([Entry(1, None)]) == {1: DEFAULT_CONTEST_BUDGET}
-
-
-def test_a_defaulted_contest_is_worth_something():
-    """
-    The default has to be a real amount, and no other test here says so.
-
-    Every assertion in this file compares against ``DEFAULT_CONTEST_BUDGET``
-    rather than pinning what it is, so the whole suite passes just as happily
-    with the default set to zero — at which point every contest nobody gave a
-    budget contributes nothing to the championship, silently, and
-    "adding a contest never devalues the others" becomes true in the emptiest
-    possible way.
-
-    Added after an audit, which set the default to zero and watched the suite
-    agree.
-    """
-    assert DEFAULT_CONTEST_BUDGET > 0
-
-    resolved = resolve_budgets([Entry(1, None)])
-
-    assert resolved[1] > 0
-
-
-def test_an_explicit_default_overrides_the_module_one():
-    """
-    ``default`` is a parameter, and nothing here ever passed it.
-
-    Every other test in this file leans on the module constant, so the
-    parameter could be ignored entirely — the function reading
-    DEFAULT_CONTEST_BUDGET regardless of what a caller asked for — and the
-    suite would not notice. A group that deliberately prices its contests
-    differently would silently get the shipped default instead.
-
-    Added after an audit ignored the argument and watched the suite agree.
-    """
-    custom = DEFAULT_CONTEST_BUDGET + 500
-
-    resolved = resolve_budgets([Entry(1, None)], default=custom)
-
-    assert resolved == {1: custom}
 
 
 def test_a_repeated_contest_takes_its_last_budget_rather_than_their_sum():
@@ -76,35 +46,20 @@ def test_a_repeated_contest_takes_its_last_budget_rather_than_their_sum():
     together would invent a budget nobody set and quietly break the guarantee
     the group rests on.
     """
-    resolved = resolve_budgets([Entry(1, 100), Entry(1, 250)])
-
-    assert resolved == {1: Decimal(250)}
-
-
-def test_implicit_contests_are_worth_the_same_as_each_other():
-    """Not a split of a fixed total — each gets the whole default."""
-    resolved = resolve_budgets([Entry(1, None), Entry(2, None), Entry(3, None)])
-
-    assert set(resolved.values()) == {DEFAULT_CONTEST_BUDGET}
+    assert resolve_budgets([Entry(1, 100), Entry(1, 250)]) == {1: Decimal(250)}
 
 
 def test_adding_a_contest_does_not_devalue_the_existing_ones():
     """The property the meta-contest design exists to guarantee."""
-    before = resolve_budgets([Entry(1, None), Entry(2, None)])
-    after = resolve_budgets([Entry(1, None), Entry(2, None), Entry(3, None)])
+    before = resolve_budgets([Entry(1, 1000), Entry(2, 500)])
+    after = resolve_budgets([Entry(1, 1000), Entry(2, 500), Entry(3, 1000)])
 
     assert after[1] == before[1]
     assert after[2] == before[2]
 
 
-def test_explicit_and_implicit_budgets_coexist():
-    resolved = resolve_budgets([Entry(1, "500"), Entry(2, None)])
-
-    assert resolved == {1: Decimal(500), 2: DEFAULT_CONTEST_BUDGET}
-
-
 def test_a_zero_budget_is_honoured_rather_than_treated_as_missing():
-    """Zero is a deliberate choice — a contest that counts for nothing."""
+    """Zero is a deliberate choice: a contest that counts for nothing."""
     assert resolve_budgets([Entry(1, 0)]) == {1: Decimal(0)}
 
 
@@ -114,15 +69,12 @@ def test_an_empty_group_resolves_to_nothing():
 
 def test_budgets_are_exact_decimals_in_ten_thousandths():
     """The unit the awards are allocated in, so a budget divides without drift."""
-    resolved = resolve_budgets([Entry(1, "1234.5"), Entry(2, None)])
+    resolved = resolve_budgets([Entry(1, "1234.5"), Entry(2, 1000)])
 
     assert all(isinstance(v, Decimal) for v in resolved.values())
     assert resolved[1] == Decimal("1234.5000")
     assert resolved[1].as_tuple().exponent == -4
-
-
-def test_the_default_budget_is_an_exact_amount():
-    assert isinstance(DEFAULT_CONTEST_BUDGET, Decimal)
+    assert resolved[2].as_tuple().exponent == -4
 
 
 def test_a_float_budget_is_refused_rather_than_guessed_at():
@@ -133,11 +85,6 @@ def test_a_float_budget_is_refused_rather_than_guessed_at():
     """
     with pytest.raises(TypeError, match="budget"):
         resolve_budgets([Entry(1, 250.0)])
-
-
-def test_a_float_default_is_refused_too():
-    with pytest.raises(TypeError):
-        resolve_budgets([Entry(1, None)], default=1000.0)
 
 
 def test_a_negative_budget_is_refused():

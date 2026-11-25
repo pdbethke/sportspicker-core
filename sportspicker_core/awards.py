@@ -129,6 +129,10 @@ def effective_pot(pot, scores, params: dict) -> Decimal:
     """
     Shrink or void the pot when too few members scored.
 
+    ``min_participants`` absent or zero means there is no minimum. When it is
+    set, ``min_participants_mode`` must say what a short field does (see
+    ``min_participants_mode``).
+
     ``min_participants`` counts members who *scored*, not members who merely
     played. Because weights are normalised, a non-scorer already takes nothing
     from the pot, so the risk this guards against is a tiny handful of scorers
@@ -144,14 +148,31 @@ def effective_pot(pot, scores, params: dict) -> Decimal:
     if not minimum:
         return _from_units(units)
 
+    mode = min_participants_mode(params)
     scoring = sum(1 for s in scores if s.raw_points > 0)
     if scoring >= minimum:
         return _from_units(units)
 
-    mode = params.get("min_participants_mode", "scale")
     if mode == "void":
         return _from_units(0)
     return _from_units(round(Fraction(units * scoring, minimum)))
+
+
+def min_participants_mode(params: dict) -> str:
+    """
+    What a short field does to the pot: ``"scale"`` or ``"void"``.
+
+    Required whenever ``min_participants`` is set. Shrinking the pot and
+    voiding it are both reasonable, and which one applies is the group's
+    choice, so a minimum without a mode is refused rather than given one.
+    """
+    mode = params.get("min_participants_mode")
+    if mode not in ("scale", "void"):
+        raise ValueError(
+            f"min_participants_mode must be 'scale' or 'void' when "
+            f"min_participants is set, not {mode!r}"
+        )
+    return mode
 
 
 def _weight(value, membership_id: int) -> Fraction:

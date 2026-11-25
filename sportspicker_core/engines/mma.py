@@ -37,11 +37,11 @@ class MmaScoringEngine(BaseScoringEngine):
 
         # Draw / no-contest — everyone gets credit
         if result.method in ("draw", "no_contest") or result.winner_id is None:
-            return ScoringResult(is_correct=True, points_earned=1)
+            return ScoringResult(is_correct=True, points_earned=1, tiebreaker_score=None)
 
         # Check winner
         if pick.picked_team_id != result.winner_id:
-            return ScoringResult(is_correct=False, points_earned=0)
+            return ScoringResult(is_correct=False, points_earned=0, tiebreaker_score=None)
 
         # Winner is correct — calculate bonus points
         correct_method = bool(

@@ -21,7 +21,7 @@ class BinaryScoringEngine(BaseScoringEngine):
         self.check_inputs(pick, match)
         self.check_in_match(pick.picked_team_id, match, "the pick")
         if not match.is_scored:
-            return ScoringResult(is_correct=False, points_earned=0)
+            return ScoringResult(is_correct=False, points_earned=0, tiebreaker_score=None)
 
         home_score, away_score = match.home.score, match.away.score
         actual_winner = match.winner_team_id

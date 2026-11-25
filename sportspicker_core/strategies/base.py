@@ -9,6 +9,8 @@ the strategy does internally.
 import abc
 from dataclasses import dataclass
 
+from ..awards import min_participants_mode
+
 
 @dataclass(frozen=True)
 class RoundScore:
@@ -29,8 +31,8 @@ class NormalizationStrategy(abc.ABC):
         min_participants = params.get("min_participants", 0)
         if not isinstance(min_participants, int) or min_participants < 0:
             raise ValueError("min_participants must be a non-negative integer")
-        if params.get("min_participants_mode", "scale") not in ("scale", "void"):
-            raise ValueError("min_participants_mode must be 'scale' or 'void'")
+        if min_participants:
+            min_participants_mode(params)
         drop_worst = params.get("drop_worst_n", 0)
         if not isinstance(drop_worst, int) or drop_worst < 0:
             raise ValueError("drop_worst_n must be a non-negative integer")

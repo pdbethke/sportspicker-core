@@ -58,7 +58,7 @@ def test_rank_rejects_empty_points_table():
     strategy = normalization_registry.get("rank")
 
     with pytest.raises(ValueError):
-        strategy.validate_config({"points_table": []})
+        strategy.validate_config({"points_table": [], "tail_value": 0})
 
 
 def test_nonzero_drop_worst_n_is_rejected_as_unimplemented():
@@ -68,7 +68,7 @@ def test_nonzero_drop_worst_n_is_rejected_as_unimplemented():
     be refused until it is real.
     """
     for slug, params in (
-        ("rank", {"points_table": [25, 18], "drop_worst_n": 2}),
+        ("rank", {"points_table": [25, 18], "tail_value": 0, "drop_worst_n": 2}),
         ("share", {"drop_worst_n": 1}),
         ("equal", {"drop_worst_n": 1}),
     ):
@@ -108,3 +108,28 @@ def test_rank_refuses_to_weigh_with_a_negative_tail_value():
     with pytest.raises(ValueError, match="tail_value"):
         strategy.weigh_round(scores((1, 9), (2, 7), (3, 1)),
                              {"points_table": [25, 18], "tail_value": -3})
+
+
+def test_rank_requires_a_tail_value():
+    """
+    What a place beyond the table is worth is the group's decision. The
+    library used to assume nothing; now leaving it out is refused, by
+    validation and by weighing alike.
+    """
+    strategy = normalization_registry.get("rank")
+
+    with pytest.raises(ValueError, match="tail_value"):
+        strategy.validate_config({"points_table": [25, 18]})
+    with pytest.raises(ValueError, match="tail_value"):
+        strategy.weigh_round(scores((1, 9), (2, 7), (3, 1)), {"points_table": [25, 18]})
+
+
+@pytest.mark.parametrize("slug", ["rank", "share", "equal"])
+def test_a_minimum_needs_its_mode_at_validation(slug):
+    params = {"points_table": [25, 18], "tail_value": 0} if slug == "rank" else {}
+    strategy = normalization_registry.get(slug)
+
+    with pytest.raises(ValueError, match="min_participants_mode"):
+        strategy.validate_config({**params, "min_participants": 3})
+
+    strategy.validate_config({**params, "min_participants": 3, "min_participants_mode": "void"})

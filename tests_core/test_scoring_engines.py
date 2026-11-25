@@ -245,3 +245,23 @@ class TestInputTypes:
         assert make_match(14, 28).winner_team_id == AWAY
         assert make_match(21, 21).winner_team_id is None
         assert make_match(None, 21).winner_team_id is None
+
+
+class TestScoringResult:
+    """
+    Every field is said. "No tiebreaker" is an explicit None, as it is
+    for the engine inputs; leaving it out is a TypeError rather than an
+    assumption an engine author never made.
+    """
+
+    def test_the_tiebreaker_must_be_given(self):
+        from sportspicker_core import ScoringResult
+
+        with pytest.raises(TypeError, match="tiebreaker_score"):
+            ScoringResult(is_correct=True, points_earned=1)
+
+    def test_an_explicit_none_says_there_is_no_tiebreaker(self):
+        from sportspicker_core import ScoringResult
+
+        assert ScoringResult(is_correct=True, points_earned=1,
+                             tiebreaker_score=None).tiebreaker_score is None

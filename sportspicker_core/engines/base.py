@@ -1,17 +1,21 @@
 import abc
 from dataclasses import dataclass
-from typing import Optional
 
 from .inputs import MatchOutcome, PickInput
 
 
 @dataclass
 class ScoringResult:
-    """Result of scoring a single pick against a match outcome."""
+    """
+    Result of scoring a single pick against a match outcome.
+
+    No field has a default: a pick with no tiebreaker says
+    ``tiebreaker_score=None``.
+    """
 
     is_correct: bool
     points_earned: int
-    tiebreaker_score: Optional[int] = None
+    tiebreaker_score: int | None
 
     def __str__(self):
         tb = f" (tiebreaker: {self.tiebreaker_score})" if self.tiebreaker_score is not None else ""
