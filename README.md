@@ -80,6 +80,7 @@ the last place, and the tests compare with `==`.
 | `strategies/` | how each rule weighs a round |
 | `engines/` | who was right — binary sports and MMA, from plain `PickInput` / `MatchOutcome` dataclasses |
 | `formats.py` | how a round weights its scored picks — confidence points (a correct pick earns its 1..N stake) and the slate rule (distinct, in range) |
+| `spreads.py` | against the spread — whether the picked side covered the home line; a push is right for everyone |
 | `registry.py` | which engine a sport resolves to; an unregistered sport is refused |
 
 Four scoring rules ship: `rank` (championship points by finishing position),

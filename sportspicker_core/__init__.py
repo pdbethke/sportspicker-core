@@ -23,6 +23,7 @@ from .engines import (
     MmaScoringEngine, PickInput, ScoringResult, Side,
 )
 from .formats import confidence_points, confidence_slate_error
+from .spreads import against_the_spread, check_line
 from .registry import (
     SportModule, SportModuleRegistry, UnknownSportError, sport_registry,
 )
@@ -43,7 +44,7 @@ __all__ = [
     "resolve_budgets",
     "BaseScoringEngine", "BinaryScoringEngine", "MmaScoringEngine", "ScoringResult",
     "FightResult", "MatchOutcome", "PickInput", "Side",
-    "confidence_points", "confidence_slate_error",
+    "confidence_points", "confidence_slate_error", "against_the_spread", "check_line",
     "SportModule", "SportModuleRegistry", "UnknownSportError", "sport_registry",
     "NormalizationStrategy", "RoundScore", "normalization_registry",
     "validate_current_strategy",
