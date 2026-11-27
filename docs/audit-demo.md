@@ -71,12 +71,12 @@ fresh interpreter and by reading the import statements.
 
 ## What to expect
 
-A hand-run dry pass — forty-two goal-violating mutants, the suite run against
-each — currently kills all forty-two:
+A hand-run dry pass — forty-nine goal-violating mutants, the suite run against
+each — currently kills all forty-nine:
 
 ```
 python scripts/mutation_dryrun.py
-kill rate: 42/42 = 1.00
+kill rate: 49/49 = 1.00
 ```
 
 Treat that as a floor, not a prediction — and here the floor has already been

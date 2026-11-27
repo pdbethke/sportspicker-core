@@ -35,6 +35,27 @@ def _check_int(value, what: str) -> None:
         raise TypeError(f"{what} must be an integer, not {type(value).__name__}")
 
 
+def _check_unit_result(result, rule: str) -> None:
+    """
+    Refuse a result that is not an engine's plain right-or-wrong: anything
+    but a ScoringResult that paid 0 or 1 and agrees with its own verdict.
+    Shared by every rule that re-reads a pick's result (confidence points,
+    the spread), so they refuse the same things in the same words.
+    """
+    if not isinstance(result, ScoringResult):
+        raise TypeError(f"result must be a ScoringResult, not {type(result).__name__}")
+    if result.points_earned not in (0, 1):
+        raise ValueError(
+            f"{rule} need an engine that pays 0 or 1 per pick; this "
+            f"result paid {result.points_earned}"
+        )
+    if result.points_earned != int(result.is_correct):
+        raise ValueError(
+            f"the result disagrees with itself: is_correct={result.is_correct} "
+            f"but it paid {result.points_earned}"
+        )
+
+
 def confidence_points(result: ScoringResult, confidence: int) -> ScoringResult:
     """
     The result of a pick staked at `confidence`: its value if it was right,
@@ -45,21 +66,10 @@ def confidence_points(result: ScoringResult, confidence: int) -> ScoringResult:
     weighted engine or a broken result rather than a pick to score.
     Correctness and the tiebreaker pass through unchanged.
     """
-    if not isinstance(result, ScoringResult):
-        raise TypeError(f"result must be a ScoringResult, not {type(result).__name__}")
+    _check_unit_result(result, "confidence points")
     _check_int(confidence, "a confidence value")
     if confidence < 1:
         raise ValueError(f"a confidence value must be at least 1, not {confidence}")
-    if result.points_earned not in (0, 1):
-        raise ValueError(
-            f"confidence points need an engine that pays 0 or 1 per pick; this "
-            f"result paid {result.points_earned}"
-        )
-    if result.points_earned != int(result.is_correct):
-        raise ValueError(
-            f"the result disagrees with itself: is_correct={result.is_correct} "
-            f"but it paid {result.points_earned}"
-        )
     return dataclasses.replace(
         result, points_earned=confidence if result.is_correct else 0
     )

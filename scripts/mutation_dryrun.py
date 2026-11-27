@@ -291,6 +291,48 @@ MUTANTS = [
         "    if confidence < 1:\n",
         "    if confidence < 0:\n",
     ),
+    (
+        "sportspicker_core/spreads.py",
+        "spread: a push is wrong for everyone instead of right",
+        "    if margin == 0:\n        is_correct = True\n",
+        "    if margin == 0:\n        is_correct = False\n",
+    ),
+    (
+        "sportspicker_core/spreads.py",
+        "spread: the line handicaps the away side, so favourites flip",
+        "    margin = outcome.home.score + home_spread - outcome.away.score",
+        "    margin = outcome.home.score - home_spread - outcome.away.score",
+    ),
+    (
+        "sportspicker_core/spreads.py",
+        "spread: the engine's winner verdict stands, so the line is ignored",
+        "    return dataclasses.replace(result, is_correct=is_correct, points_earned=int(is_correct))",
+        "    return result",
+    ),
+    (
+        "sportspicker_core/spreads.py",
+        "spread: a weighted engine's result is handicapped quietly",
+        '    _check_unit_result(result, "picks against the spread")\n',
+        "",
+    ),
+    (
+        "sportspicker_core/spreads.py",
+        "spread: a fight is handicapped as if it had a points margin",
+        "    if outcome.detail is not None:\n",
+        "    if False:\n",
+    ),
+    (
+        "sportspicker_core/spreads.py",
+        "spread: a quarter-point line is accepted",
+        "    if home_spread % _HALF != 0:\n",
+        "    if False:\n",
+    ),
+    (
+        "sportspicker_core/spreads.py",
+        "spread: a float line is accepted",
+        "isinstance(home_spread, bool) or not isinstance(home_spread, Decimal)",
+        "isinstance(home_spread, bool)",
+    ),
 ]
 
 
