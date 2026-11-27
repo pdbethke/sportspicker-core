@@ -335,6 +335,66 @@ MUTANTS = [
         "isinstance(home_spread, bool) or not isinstance(home_spread, Decimal)",
         "isinstance(home_spread, bool)",
     ),
+    (
+        'sportspicker_core/survivor.py',
+        'survivor: a tie survives, as the winner engine would have it',
+        '    won = (outcome.is_scored and picked_team_id is not None\n           and outcome.winner_team_id == picked_team_id)',
+        '    won = result.is_correct',
+    ),
+    (
+        'sportspicker_core/survivor.py',
+        'survivor: an eliminated member keeps counting rounds',
+        '            if member in out_in:\n                continue\n',
+        '            if False:\n                continue\n',
+    ),
+    (
+        'sportspicker_core/survivor.py',
+        'survivor: a pending pick counts as decided',
+        '                pending = True\n',
+        '                pending = False\n',
+    ),
+    (
+        'sportspicker_core/survivor.py',
+        'survivor: the pool is decided while a pick is still pending',
+        '        if complete_so_far and len(entered) - len(out_in) <= 1:',
+        '        if len(entered) - len(out_in) <= 1:',
+    ),
+    (
+        'sportspicker_core/survivor.py',
+        'survivor: a pool of one is won before a round is played',
+        '    if decided_in is None and complete_so_far and rounds:',
+        '    if decided_in is None and complete_so_far:',
+    ),
+    (
+        'sportspicker_core/survivor.py',
+        'survivor: rounds after the decision keep counting',
+        '        if decided_in is not None:\n            continue\n',
+        '        if False:\n            continue\n',
+    ),
+    (
+        'sportspicker_core/survivor.py',
+        'survivor: a team is used twice',
+        '    if team_id in set(used_team_ids):',
+        '    if False:',
+    ),
+    (
+        'sportspicker_core/survivor.py',
+        'survivor: an entrant with no verdict is skipped, not refused',
+        '        if missing:\n',
+        '        if False:\n',
+    ),
+    (
+        'sportspicker_core/survivor.py',
+        "survivor: a weighted engine's result is read as a survivor pick",
+        '    _check_unit_result(result, "survivor picks")\n',
+        '',
+    ),
+    (
+        'sportspicker_core/survivor.py',
+        'survivor: a fight is read by its scores',
+        '    if outcome.detail is not None:\n',
+        '    if False:\n',
+    ),
 ]
 
 
