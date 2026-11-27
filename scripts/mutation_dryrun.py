@@ -255,6 +255,42 @@ MUTANTS = [
         '    if "tail_value" not in params:',
         "    if False:",
     ),
+    (
+        "sportspicker_core/formats.py",
+        "confidence: a wrong pick is paid its stake",
+        "        result, points_earned=confidence if result.is_correct else 0\n",
+        "        result, points_earned=confidence\n",
+    ),
+    (
+        "sportspicker_core/formats.py",
+        "confidence: a weighted engine's points are multiplied quietly",
+        "    if result.points_earned not in (0, 1):",
+        "    if result.points_earned not in range(-10, 10):",
+    ),
+    (
+        "sportspicker_core/formats.py",
+        "confidence: one value staked on two games",
+        "    if repeated:\n",
+        "    if False:\n",
+    ),
+    (
+        "sportspicker_core/formats.py",
+        "confidence: a stake above the round's game count is accepted",
+        "v < 1 or v > game_count}",
+        "v < 1 or v > game_count + 1}",
+    ),
+    (
+        "sportspicker_core/formats.py",
+        "confidence: a stake of zero is accepted",
+        "v < 1 or v > game_count}",
+        "v < 0 or v > game_count}",
+    ),
+    (
+        "sportspicker_core/formats.py",
+        "confidence: a non-positive stake is scored",
+        "    if confidence < 1:\n",
+        "    if confidence < 0:\n",
+    ),
 ]
 
 
