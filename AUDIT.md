@@ -32,6 +32,7 @@ Ranked by how much they would hurt if silently wrong.
 | `sportspicker_core/engines/binary.py` | correct/incorrect and the tiebreaker distance for every non-MMA sport |
 | `sportspicker_core/formats.py` | what a confidence-staked pick earns, and whether a member's stakes for a round are a valid slate |
 | `sportspicker_core/spreads.py` | whether a pick covered the line, and that a push is right for everyone |
+| `sportspicker_core/survivor.py` | who is still alive in a survivor pool, how long each lasted, and when it was decided; a tie eliminates |
 | `sportspicker_core/engines/mma.py` | winner + method + round scoring, draw and no-contest handling |
 | `sportspicker_core/budgets.py` | whether adding a contest devalues the ones already in a group |
 | `sportspicker_core/registry.py` | which engine a sport resolves to; an unregistered sport must be refused, never scored by a fallback |

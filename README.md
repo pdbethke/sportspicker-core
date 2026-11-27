@@ -81,6 +81,7 @@ the last place, and the tests compare with `==`.
 | `engines/` | who was right — binary sports and MMA, from plain `PickInput` / `MatchOutcome` dataclasses |
 | `formats.py` | how a round weights its scored picks — confidence points (a correct pick earns its 1..N stake) and the slate rule (distinct, in range) |
 | `spreads.py` | against the spread — whether the picked side covered the home line; a push is right for everyone |
+| `survivor.py` | survivor pools — a pick survives only by winning (a tie eliminates), a team once, and the pool's standings and deciding round |
 | `registry.py` | which engine a sport resolves to; an unregistered sport is refused |
 
 Four scoring rules ship: `rank` (championship points by finishing position),

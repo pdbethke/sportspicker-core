@@ -24,6 +24,10 @@ from .engines import (
 )
 from .formats import confidence_points, confidence_slate_error
 from .spreads import against_the_spread, check_line
+from .survivor import (
+    ELIMINATED, PENDING, SURVIVED, SurvivorPool, SurvivorStanding, Verdict,
+    survivor_pick_error, survivor_pool, survivor_result,
+)
 from .registry import (
     SportModule, SportModuleRegistry, UnknownSportError, sport_registry,
 )
@@ -45,6 +49,8 @@ __all__ = [
     "BaseScoringEngine", "BinaryScoringEngine", "MmaScoringEngine", "ScoringResult",
     "FightResult", "MatchOutcome", "PickInput", "Side",
     "confidence_points", "confidence_slate_error", "against_the_spread", "check_line",
+    "ELIMINATED", "PENDING", "SURVIVED", "SurvivorPool", "SurvivorStanding", "Verdict",
+    "survivor_pick_error", "survivor_pool", "survivor_result",
     "SportModule", "SportModuleRegistry", "UnknownSportError", "sport_registry",
     "NormalizationStrategy", "RoundScore", "normalization_registry",
     "validate_current_strategy",
