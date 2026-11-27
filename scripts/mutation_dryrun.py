@@ -28,8 +28,10 @@ imagine, and that is the point of running the real thing.
 Every mutant is reverted before the next, and the tree is restored on the way
 out even if the suite raises.
 """
+import os
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
@@ -337,11 +339,25 @@ MUTANTS = [
 
 
 def run_suite() -> bool:
-    """True when the core suite passes."""
-    result = subprocess.run(
-        [sys.executable, "-m", "pytest", "tests_core", "-q", "-x", "-p", "no:warnings"],
-        cwd=REPO, capture_output=True, text=True,
-    )
+    """
+    True when the core suite passes.
+
+    Each run compiles into its own empty bytecode cache. Python trusts a
+    cached .pyc whose source has the same size and the same mtime to the
+    second, and a mutant is often the same size as the line it replaces and
+    written back within the second. Sharing the repo's __pycache__, a run
+    could import the previous mutant instead of the code on disk (a false
+    kill, or a false survivor), and the restored tree could keep a mutant's
+    .pyc for the next ordinary test run, which is how it was found
+    (2026-11-27: test_a_value_below_one_is_refused failed after a dry run).
+    """
+    with tempfile.TemporaryDirectory(prefix="mutation-pycache-") as cache:
+        result = subprocess.run(
+            [sys.executable, "-m", "pytest", "tests_core", "-q", "-x", "-p", "no:warnings",
+             "-p", "no:cacheprovider"],
+            cwd=REPO, capture_output=True, text=True,
+            env={**os.environ, "PYTHONPYCACHEPREFIX": cache},
+        )
     return result.returncode == 0
 
 
